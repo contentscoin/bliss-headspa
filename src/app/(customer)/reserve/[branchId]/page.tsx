@@ -21,6 +21,8 @@ import {
   XCircle,
   Loader2,
 } from "lucide-react";
+import KakaoMap from "@/components/shared/KakaoMap";
+import { toast } from "sonner";
 
 const TIME_SLOTS = [
   "10:00",
@@ -57,6 +59,7 @@ export default function ReservePage({
   const [completedReservation, setCompletedReservation] = useState<{
     reservationNo: string;
   } | null>(null);
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   // Voucher verification
   const voucher = useQuery(
@@ -84,8 +87,32 @@ export default function ReservePage({
     selectedDate &&
     selectedTime;
 
+  const validateForm = (): boolean => {
+    const newErrors: Record<string, string> = {};
+    if (!customerName.trim() || customerName.trim().length < 2) {
+      newErrors.name = "이름은 2자 이상 입력해 주세요.";
+    }
+    if (!customerPhone.trim() || !/^010-\d{4}-\d{4}$/.test(customerPhone.trim())) {
+      newErrors.phone = "010-XXXX-XXXX 형식으로 입력해 주세요.";
+    }
+    if (!customerEmail.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerEmail.trim())) {
+      newErrors.email = "올바른 이메일 형식을 입력해 주세요.";
+    }
+    if (!voucherVerified) {
+      newErrors.voucher = "바우처 검증이 필요합니다.";
+    }
+    if (!selectedDate) {
+      newErrors.date = "날짜를 선택해 주세요.";
+    }
+    if (!selectedTime) {
+      newErrors.time = "시간을 선택해 주세요.";
+    }
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleSubmit = async () => {
-    if (!isFormComplete || !voucher || !selectedDate) return;
+    if (!validateForm() || !voucher || !selectedDate) return;
     setIsSubmitting(true);
     try {
       const result = await createReservation({
@@ -98,8 +125,9 @@ export default function ReservePage({
         reservationTime: selectedTime,
       });
       setCompletedReservation({ reservationNo: result.reservationNo });
+      toast.success("예약이 완료되었습니다");
     } catch (err) {
-      alert(err instanceof Error ? err.message : "예약에 실패했습니다.");
+      toast.error(err instanceof Error ? err.message : "예약에 실패했습니다.");
     } finally {
       setIsSubmitting(false);
     }
@@ -194,6 +222,15 @@ export default function ReservePage({
             <Phone className="size-4 shrink-0" />
             <span>{branch.phone}</span>
           </div>
+          <div className="pt-2">
+            <KakaoMap
+              lat={branch.lat}
+              lng={branch.lng}
+              name={branch.name}
+              address={branch.address}
+              height="200px"
+            />
+          </div>
         </CardContent>
       </Card>
 
@@ -209,8 +246,10 @@ export default function ReservePage({
               id="name"
               placeholder="홍길동"
               value={customerName}
-              onChange={(e) => setCustomerName(e.target.value)}
+              onChange={(e) => { setCustomerName(e.target.value); setErrors((prev) => ({ ...prev, name: "" })); }}
+              className={`min-h-[44px] ${errors.name ? "border-destructive" : ""}`}
             />
+            {errors.name && <p className="text-sm text-destructive">{errors.name}</p>}
           </div>
           <div className="space-y-2">
             <Label htmlFor="phone">휴대폰번호</Label>
@@ -218,8 +257,10 @@ export default function ReservePage({
               id="phone"
               placeholder="010-1234-5678"
               value={customerPhone}
-              onChange={(e) => setCustomerPhone(e.target.value)}
+              onChange={(e) => { setCustomerPhone(e.target.value); setErrors((prev) => ({ ...prev, phone: "" })); }}
+              className={`min-h-[44px] ${errors.phone ? "border-destructive" : ""}`}
             />
+            {errors.phone && <p className="text-sm text-destructive">{errors.phone}</p>}
           </div>
           <div className="space-y-2">
             <Label htmlFor="email">이메일</Label>
@@ -228,8 +269,10 @@ export default function ReservePage({
               type="email"
               placeholder="example@email.com"
               value={customerEmail}
-              onChange={(e) => setCustomerEmail(e.target.value)}
+              onChange={(e) => { setCustomerEmail(e.target.value); setErrors((prev) => ({ ...prev, email: "" })); }}
+              className={`min-h-[44px] ${errors.email ? "border-destructive" : ""}`}
             />
+            {errors.email && <p className="text-sm text-destructive">{errors.email}</p>}
           </div>
         </CardContent>
       </Card>
@@ -276,6 +319,7 @@ export default function ReservePage({
               </span>
             </div>
           )}
+          {errors.voucher && <p className="text-sm text-destructive">{errors.voucher}</p>}
         </CardContent>
       </Card>
 
@@ -284,15 +328,16 @@ export default function ReservePage({
         <CardHeader>
           <CardTitle className="text-lg">날짜 선택</CardTitle>
         </CardHeader>
-        <CardContent className="flex justify-center">
+        <CardContent className="flex flex-col items-center">
           <Calendar
             mode="single"
             selected={selectedDate}
-            onSelect={setSelectedDate}
+            onSelect={(d) => { setSelectedDate(d); setErrors((prev) => ({ ...prev, date: "" })); }}
             locale={ko}
             disabled={(date) => date <= new Date()}
             className="rounded-md border"
           />
+          {errors.date && <p className="text-sm text-destructive mt-2">{errors.date}</p>}
         </CardContent>
       </Card>
 
@@ -302,18 +347,20 @@ export default function ReservePage({
           <CardTitle className="text-lg">시간 선택</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-5 gap-2">
+          <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
             {TIME_SLOTS.map((time) => (
               <Button
                 key={time}
                 variant={selectedTime === time ? "default" : "outline"}
                 size="sm"
-                onClick={() => setSelectedTime(time)}
+                className="min-h-[44px]"
+                onClick={() => { setSelectedTime(time); setErrors((prev) => ({ ...prev, time: "" })); }}
               >
                 {time}
               </Button>
             ))}
           </div>
+          {errors.time && <p className="text-sm text-destructive mt-2">{errors.time}</p>}
         </CardContent>
       </Card>
 
@@ -361,9 +408,9 @@ export default function ReservePage({
 
       {/* Step 7: Submit */}
       <Button
-        className="w-full"
+        className="w-full min-h-[44px]"
         size="lg"
-        disabled={!isFormComplete || isSubmitting}
+        disabled={isSubmitting}
         onClick={handleSubmit}
       >
         {isSubmitting ? (

@@ -74,6 +74,23 @@ export default defineSchema({
     .index("by_status", ["status"])
     .index("by_customerPhone", ["customerPhone"]),
 
+  smsLogs: defineTable({
+    type: v.union(
+      v.literal("reservation_confirm"),
+      v.literal("reservation_notify"),
+      v.literal("cancellation"),
+      v.literal("reminder")
+    ),
+    recipientPhone: v.string(),
+    message: v.string(),
+    status: v.union(v.literal("sent"), v.literal("failed"), v.literal("pending")),
+    relatedReservationId: v.optional(v.id("reservations")),
+    sentAt: v.number(),
+    retryCount: v.optional(v.number()),
+  })
+    .index("by_status", ["status"])
+    .index("by_reservation", ["relatedReservationId"]),
+
   sessions: defineTable({
     userId: v.id("users"),
     token: v.string(),

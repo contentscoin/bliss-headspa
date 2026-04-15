@@ -1,4 +1,4 @@
-import { query, mutation } from "./_generated/server";
+import { query, mutation, internalMutation } from "./_generated/server";
 import { v } from "convex/values";
 
 function generateVoucherCode(): string {
@@ -109,6 +109,23 @@ export const use = mutation({
       usedAt: Date.now(),
       usedBranchId: args.branchId,
     });
+  },
+});
+
+// Cron: 만료된 바우처 자동 처리
+export const expireOverdue = internalMutation({
+  handler: async (ctx) => {
+    const now = Date.now();
+    const issued = await ctx.db
+      .query("vouchers")
+      .withIndex("by_status", (q) => q.eq("status", "issued"))
+      .collect();
+
+    for (const voucher of issued) {
+      if (voucher.expiresAt < now) {
+        await ctx.db.patch(voucher._id, { status: "expired" });
+      }
+    }
   },
 });
 

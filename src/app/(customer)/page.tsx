@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { MapPin, Clock, Phone } from "lucide-react";
+import KakaoMap from "@/components/shared/KakaoMap";
 
 const REGIONS = ["전체", "서울", "경기", "부산", "대구", "광주", "대전", "인천", "제주"];
 
@@ -114,13 +115,12 @@ export default function CustomerMainPage() {
                       <DialogHeader>
                         <DialogTitle>{branch.name}</DialogTitle>
                       </DialogHeader>
-                      <div className="aspect-[4/3] rounded-lg bg-muted flex items-center justify-center text-muted-foreground text-sm">
-                        <div className="text-center">
-                          <MapPin className="mx-auto mb-2 size-8 opacity-50" />
-                          <p>Kakao Map</p>
-                          <p className="text-xs mt-1">{branch.address}</p>
-                        </div>
-                      </div>
+                      <KakaoMap
+                        lat={branch.lat}
+                        lng={branch.lng}
+                        name={branch.name}
+                        address={branch.address}
+                      />
                     </DialogContent>
                   </Dialog>
                 </div>

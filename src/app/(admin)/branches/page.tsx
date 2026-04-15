@@ -5,6 +5,7 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import type { Id } from "../../../../convex/_generated/dataModel";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 type BranchForm = {
   name: string;
@@ -68,16 +69,35 @@ export default function BranchesPage() {
       businessHours: form.businessHours,
     };
 
-    if (editId) {
-      await updateBranch({ branchId: editId, ...data });
-    } else {
-      await createBranch(data);
+    try {
+      if (editId) {
+        await updateBranch({ branchId: editId, ...data });
+        toast.success("지점이 수정되었습니다");
+      } else {
+        await createBranch(data);
+        toast.success("지점이 추가되었습니다");
+      }
+      setDialogOpen(false);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "오류가 발생했습니다");
     }
-    setDialogOpen(false);
   };
 
   const setField = (key: keyof BranchForm, value: string) =>
     setForm((prev) => ({ ...prev, [key]: value }));
+
+  if (branches === undefined) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <h1 className="text-3xl font-bold mb-6">지점 관리</h1>
+        <div className="space-y-3">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="h-12 bg-muted rounded animate-pulse" />
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -123,7 +143,14 @@ export default function BranchesPage() {
                   <Button
                     variant={b.isActive ? "destructive" : "secondary"}
                     size="sm"
-                    onClick={() => toggleActive({ branchId: b._id })}
+                    onClick={async () => {
+                      try {
+                        await toggleActive({ branchId: b._id });
+                        toast.success("상태가 변경되었습니다");
+                      } catch (err) {
+                        toast.error(err instanceof Error ? err.message : "오류가 발생했습니다");
+                      }
+                    }}
                   >
                     {b.isActive ? "비활성화" : "활성화"}
                   </Button>

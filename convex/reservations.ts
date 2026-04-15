@@ -1,5 +1,6 @@
-import { query, mutation } from "./_generated/server";
+import { query, mutation, internalAction, internalQuery } from "./_generated/server";
 import { v } from "convex/values";
+import { internal } from "./_generated/api";
 
 function generateReservationNo(): string {
   const date = new Date();
@@ -97,6 +98,11 @@ export const create = mutation({
       usedBranchId: args.branchId,
     });
 
+    // 예약 확인 SMS 발송 (비동기)
+    await ctx.scheduler.runAfter(0, internal.sms.sendReservationConfirm, {
+      reservationId,
+    });
+
     return { reservationId, reservationNo };
   },
 });
@@ -132,5 +138,49 @@ export const cancel = mutation({
       usedAt: undefined,
       usedBranchId: undefined,
     });
+
+    // 취소 SMS 발송 (비동기)
+    await ctx.scheduler.runAfter(0, internal.sms.sendCancellationSMS, {
+      reservationId: args.reservationId,
+    });
+  },
+});
+
+// Cron: 내일 예약 리마인더 SMS 발송
+export const sendReminders = internalAction({
+  handler: async (ctx) => {
+    // 내일 날짜 계산 (KST)
+    const now = new Date();
+    const kst = new Date(now.getTime() + 9 * 60 * 60 * 1000);
+    const tomorrow = new Date(kst);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const tomorrowStr = `${tomorrow.getFullYear()}-${String(tomorrow.getMonth() + 1).padStart(2, "0")}-${String(tomorrow.getDate()).padStart(2, "0")}`;
+
+    const reservations = await ctx.runQuery(internal.reservations.getConfirmedByDate, {
+      date: tomorrowStr,
+    });
+
+    for (const r of reservations) {
+      const [month, day] = r.reservationDate.split("-").slice(1);
+      const msg = `[블리스헤드스파] 내일 ${parseInt(month)}/${parseInt(day)} ${r.reservationTime} 예약이 있습니다. 예약번호: ${r.reservationNo}`;
+      await ctx.runAction(internal.sms.sendSMSInternal, {
+        phone: r.customerPhone,
+        message: msg,
+        type: "reminder",
+        reservationId: r._id,
+      });
+    }
+  },
+});
+
+// Internal query: 특정 날짜의 confirmed 예약 조회
+export const getConfirmedByDate = internalQuery({
+  args: { date: v.string() },
+  handler: async (ctx, args) => {
+    const reservations = await ctx.db
+      .query("reservations")
+      .withIndex("by_date", (q) => q.eq("reservationDate", args.date))
+      .collect();
+    return reservations.filter((r) => r.status === "confirmed");
   },
 });

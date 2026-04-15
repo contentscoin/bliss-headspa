@@ -10,9 +10,12 @@
 
 import type * as auth from "../auth.js";
 import type * as branches from "../branches.js";
+import type * as crons from "../crons.js";
 import type * as dashboard from "../dashboard.js";
 import type * as reservations from "../reservations.js";
+import type * as sms from "../sms.js";
 import type * as users from "../users.js";
+import type * as voucherExport from "../voucherExport.js";
 import type * as vouchers from "../vouchers.js";
 
 import type {
@@ -24,9 +27,12 @@ import type {
 declare const fullApi: ApiFromModules<{
   auth: typeof auth;
   branches: typeof branches;
+  crons: typeof crons;
   dashboard: typeof dashboard;
   reservations: typeof reservations;
+  sms: typeof sms;
   users: typeof users;
+  voucherExport: typeof voucherExport;
   vouchers: typeof vouchers;
 }>;
 

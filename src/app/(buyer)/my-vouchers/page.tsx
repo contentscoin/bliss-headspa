@@ -1,9 +1,11 @@
 "use client";
 
 import { useQuery } from "convex/react";
+import { useAction } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import type { Id } from "../../../../convex/_generated/dataModel";
 import { Button } from "@/components/ui/button";
+import { useState } from "react";
 
 const statusConfig: Record<string, { label: string; className: string }> = {
   issued: { label: "발행됨", className: "bg-blue-100 text-blue-700" },
@@ -32,9 +34,27 @@ export default function MyVouchersPage() {
 
   const fmtDate = (ts: number) => new Date(ts).toLocaleDateString("ko-KR");
 
-  const handleExcelDownload = () => {
-    // TODO: 엑셀 다운로드 구현
-    alert("엑셀 다운로드 기능은 준비 중입니다.");
+  const exportVouchers = useAction(api.voucherExport.exportVouchers);
+  const [isExporting, setIsExporting] = useState(false);
+
+  const handleExcelDownload = async () => {
+    if (!buyerId) return;
+    setIsExporting(true);
+    try {
+      const csv = await exportVouchers({ buyerId });
+      const bom = "\uFEFF";
+      const blob = new Blob([bom + csv], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `바우처_목록_${new Date().toISOString().slice(0, 10)}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      alert("다운로드 중 오류가 발생했습니다.");
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   if (!buyerId) {
@@ -50,8 +70,8 @@ export default function MyVouchersPage() {
     <div className="container mx-auto px-4 py-8">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-3xl font-bold">내 바우처</h1>
-        <Button variant="outline" onClick={handleExcelDownload}>
-          엑셀 다운로드
+        <Button variant="outline" onClick={handleExcelDownload} disabled={isExporting}>
+          {isExporting ? "다운로드 중..." : "엑셀 다운로드"}
         </Button>
       </div>
 
