@@ -51,7 +51,7 @@ export default function BranchAdminLayout({
   const [open, setOpen] = useState(false);
 
   return (
-    <ProtectedRoute allowedRoles={["branch_admin"]}>
+    <ProtectedRoute allowedRoles={["branch_admin", "super_admin"]}>
     <div className="flex min-h-screen">
       {/* Desktop Sidebar */}
       <aside className="hidden md:flex md:w-56 md:flex-col md:border-r md:bg-sidebar">

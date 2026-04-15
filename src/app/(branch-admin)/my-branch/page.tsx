@@ -5,6 +5,7 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import type { Id } from "../../../../convex/_generated/dataModel";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/lib/auth";
 
 const statusConfig: Record<string, { label: string; className: string }> = {
   confirmed: { label: "확정", className: "bg-blue-100 text-blue-700" },
@@ -15,15 +16,12 @@ const statusConfig: Record<string, { label: string; className: string }> = {
 
 type ReservationStatus = "confirmed" | "completed" | "cancelled" | "no_show";
 
-// TODO: Replace with actual auth context to get the branch admin's branchId
-const PLACEHOLDER_BRANCH_ID = "" as Id<"branches">;
-
 export default function MyBranchPage() {
   const today = new Date().toISOString().slice(0, 10);
   const [selectedDate, setSelectedDate] = useState(today);
 
-  // This will be replaced once auth provides the branchId
-  const branchId = PLACEHOLDER_BRANCH_ID;
+  const { user } = useAuth();
+  const branchId = user?.branchId as Id<"branches"> | undefined;
 
   const reservations = useQuery(
     api.reservations.getByBranch,

@@ -13,6 +13,7 @@ import type * as branches from "../branches.js";
 import type * as crons from "../crons.js";
 import type * as dashboard from "../dashboard.js";
 import type * as reservations from "../reservations.js";
+import type * as seed from "../seed.js";
 import type * as sms from "../sms.js";
 import type * as users from "../users.js";
 import type * as voucherExport from "../voucherExport.js";
@@ -30,6 +31,7 @@ declare const fullApi: ApiFromModules<{
   crons: typeof crons;
   dashboard: typeof dashboard;
   reservations: typeof reservations;
+  seed: typeof seed;
   sms: typeof sms;
   users: typeof users;
   voucherExport: typeof voucherExport;

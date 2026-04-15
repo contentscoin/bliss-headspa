@@ -35,10 +35,18 @@ export const listByRole = query({
   },
 });
 
+async function hashPassword(password: string): Promise<string> {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(password);
+  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
 export const create = mutation({
   args: {
     email: v.string(),
-    passwordHash: v.string(),
+    password: v.string(),
     name: v.string(),
     phone: v.string(),
     role: v.union(
@@ -56,7 +64,9 @@ export const create = mutation({
       .first();
     if (existing) throw new Error("이미 등록된 이메일입니다.");
 
-    return await ctx.db.insert("users", args);
+    const { password, ...rest } = args;
+    const passwordHash = await hashPassword(password);
+    return await ctx.db.insert("users", { ...rest, passwordHash });
   },
 });
 

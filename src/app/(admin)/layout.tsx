@@ -12,8 +12,10 @@ import {
   CalendarCheck,
   Users,
   Menu,
+  LogOut,
 } from "lucide-react";
 import ProtectedRoute from "@/components/shared/ProtectedRoute";
+import { useAuth } from "@/lib/auth";
 
 const navItems = [
   { href: "/dashboard", label: "대시보드", icon: LayoutDashboard },
@@ -64,6 +66,7 @@ export default function AdminLayout({
 }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const { user, logout } = useAuth();
 
   return (
     <ProtectedRoute allowedRoles={["super_admin"]}>
@@ -119,6 +122,18 @@ export default function AdminLayout({
           <h1 className="text-lg font-semibold">
             {pageTitleFromPath(pathname)}
           </h1>
+          <div className="ml-auto flex items-center gap-3">
+            {user && (
+              <span className="text-sm text-muted-foreground">{user.name}</span>
+            )}
+            <button
+              onClick={() => logout()}
+              className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-sm text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+            >
+              <LogOut className="size-4" />
+              로그아웃
+            </button>
+          </div>
         </header>
 
         <main className="flex-1 p-4 md:p-6">{children}</main>

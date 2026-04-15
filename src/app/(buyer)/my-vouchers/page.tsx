@@ -6,6 +6,7 @@ import { api } from "../../../../convex/_generated/api";
 import type { Id } from "../../../../convex/_generated/dataModel";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
+import { useAuth } from "@/lib/auth";
 
 const statusConfig: Record<string, { label: string; className: string }> = {
   issued: { label: "발행됨", className: "bg-blue-100 text-blue-700" },
@@ -14,11 +15,9 @@ const statusConfig: Record<string, { label: string; className: string }> = {
   cancelled: { label: "취소됨", className: "bg-red-100 text-red-700" },
 };
 
-// TODO: Replace with actual auth context to get the buyer's userId
-const PLACEHOLDER_BUYER_ID = "" as Id<"users">;
-
 export default function MyVouchersPage() {
-  const buyerId = PLACEHOLDER_BUYER_ID;
+  const { user } = useAuth();
+  const buyerId = user?._id as Id<"users"> | undefined;
 
   const vouchers = useQuery(
     api.vouchers.listByBuyer,
