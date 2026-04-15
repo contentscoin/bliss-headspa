@@ -1,8 +1,26 @@
-import { action, internalAction, internalMutation, internalQuery } from "./_generated/server";
+"use node";
+
+import { action, internalAction } from "./_generated/server";
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
+import { SolapiMessageService } from "solapi";
 
-// SMS 발송 Action (외부 API 호출 - 현재는 placeholder 구현)
+function getSolapiClient(): SolapiMessageService {
+  const apiKey = process.env.SOLAPI_API_KEY;
+  const apiSecret = process.env.SOLAPI_API_SECRET;
+  if (!apiKey || !apiSecret) {
+    throw new Error("SOLAPI_API_KEY 또는 SOLAPI_API_SECRET이 설정되지 않았습니다.");
+  }
+  return new SolapiMessageService(apiKey, apiSecret);
+}
+
+function getSenderNumber(): string {
+  const from = process.env.SOLAPI_SENDER_NUMBER;
+  if (!from) throw new Error("SOLAPI_SENDER_NUMBER가 설정되지 않았습니다.");
+  return from;
+}
+
+// SMS 발송 Action (public)
 export const sendSMS = action({
   args: {
     phone: v.string(),
@@ -16,20 +34,29 @@ export const sendSMS = action({
     reservationId: v.optional(v.id("reservations")),
   },
   handler: async (ctx, args) => {
-    // TODO: 실제 NHN Cloud TOAST / Aligo API 호출
-    // 현재는 console.log로 대체
-    console.log(`[SMS] To: ${args.phone}, Message: ${args.message}`);
+    let status: "sent" | "failed" = "sent";
 
-    // 발송 로그 기록
-    await ctx.runMutation(internal.sms.logSMS, {
+    try {
+      const client = getSolapiClient();
+      await client.sendOne({
+        to: args.phone.replace(/-/g, ""),
+        from: getSenderNumber(),
+        text: args.message,
+      });
+    } catch (err) {
+      console.error("[SMS 발송 실패]", err);
+      status = "failed";
+    }
+
+    await ctx.runMutation(internal.smsHelpers.logSMS, {
       type: args.type,
       recipientPhone: args.phone,
       message: args.message,
-      status: "sent",
+      status,
       relatedReservationId: args.reservationId,
     });
 
-    return { success: true };
+    return { success: status === "sent" };
   },
 });
 
@@ -37,7 +64,7 @@ export const sendSMS = action({
 export const sendReservationConfirm = internalAction({
   args: { reservationId: v.id("reservations") },
   handler: async (ctx, args) => {
-    const reservation = await ctx.runQuery(internal.sms.getReservationWithBranch, {
+    const reservation = await ctx.runQuery(internal.smsHelpers.getReservationWithBranch, {
       reservationId: args.reservationId,
     });
     if (!reservation) return;
@@ -73,7 +100,7 @@ export const sendReservationConfirm = internalAction({
 export const sendCancellationSMS = internalAction({
   args: { reservationId: v.id("reservations") },
   handler: async (ctx, args) => {
-    const reservation = await ctx.runQuery(internal.sms.getReservationWithBranch, {
+    const reservation = await ctx.runQuery(internal.smsHelpers.getReservationWithBranch, {
       reservationId: args.reservationId,
     });
     if (!reservation) return;
@@ -102,63 +129,28 @@ export const sendSMSInternal = internalAction({
     reservationId: v.optional(v.id("reservations")),
   },
   handler: async (ctx, args) => {
-    console.log(`[SMS] To: ${args.phone}, Message: ${args.message}`);
+    let status: "sent" | "failed" = "sent";
 
-    await ctx.runMutation(internal.sms.logSMS, {
+    try {
+      const client = getSolapiClient();
+      await client.sendOne({
+        to: args.phone.replace(/-/g, ""),
+        from: getSenderNumber(),
+        text: args.message,
+      });
+    } catch (err) {
+      console.error("[SMS 발송 실패]", err);
+      status = "failed";
+    }
+
+    await ctx.runMutation(internal.smsHelpers.logSMS, {
       type: args.type,
       recipientPhone: args.phone,
       message: args.message,
-      status: "sent",
+      status,
       relatedReservationId: args.reservationId,
     });
 
-    return { success: true };
-  },
-});
-
-// 내부 뮤테이션: SMS 로그 기록
-export const logSMS = internalMutation({
-  args: {
-    type: v.union(
-      v.literal("reservation_confirm"),
-      v.literal("reservation_notify"),
-      v.literal("cancellation"),
-      v.literal("reminder")
-    ),
-    recipientPhone: v.string(),
-    message: v.string(),
-    status: v.union(v.literal("sent"), v.literal("failed"), v.literal("pending")),
-    relatedReservationId: v.optional(v.id("reservations")),
-  },
-  handler: async (ctx, args) => {
-    await ctx.db.insert("smsLogs", {
-      type: args.type,
-      recipientPhone: args.recipientPhone,
-      message: args.message,
-      status: args.status,
-      relatedReservationId: args.relatedReservationId,
-      sentAt: Date.now(),
-    });
-  },
-});
-
-// 내부 쿼리: 예약 + 지점 정보 조회
-export const getReservationWithBranch = internalQuery({
-  args: { reservationId: v.id("reservations") },
-  handler: async (ctx, args) => {
-    const reservation = await ctx.db.get(args.reservationId);
-    if (!reservation) return null;
-
-    const branch = await ctx.db.get(reservation.branchId);
-
-    return {
-      customerName: reservation.customerName,
-      customerPhone: reservation.customerPhone,
-      reservationNo: reservation.reservationNo,
-      reservationDate: reservation.reservationDate,
-      reservationTime: reservation.reservationTime,
-      branchName: branch?.name ?? "",
-      branchPhone: branch?.phone ?? "",
-    };
+    return { success: status === "sent" };
   },
 });
