@@ -38,6 +38,7 @@ export default function CustomerMainPage() {
             key={region}
             variant={selectedRegion === region ? "default" : "outline"}
             size="sm"
+            className="min-h-[44px]"
             onClick={() => setSelectedRegion(region)}
           >
             {region}
@@ -101,13 +102,13 @@ export default function CustomerMainPage() {
                 <div className="flex gap-2 mt-2">
                   <Link
                     href={`/reserve/${branch._id}`}
-                    className="flex-1 inline-flex items-center justify-center rounded-lg bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/80 transition-colors"
+                    className="flex-1 inline-flex items-center justify-center rounded-lg bg-primary px-3 py-2 min-h-[44px] text-sm font-medium text-primary-foreground hover:bg-primary/80 transition-colors"
                   >
                     예약하기
                   </Link>
                   <Dialog>
                     <DialogTrigger
-                      className="inline-flex items-center justify-center rounded-lg border border-border bg-background px-3 py-2 text-sm font-medium hover:bg-muted transition-colors"
+                      className="inline-flex items-center justify-center rounded-lg border border-border bg-background px-3 py-2 min-h-[44px] text-sm font-medium hover:bg-muted transition-colors"
                     >
                         지도보기
                     </DialogTrigger>

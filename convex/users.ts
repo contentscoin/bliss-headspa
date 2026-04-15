@@ -1,6 +1,13 @@
 import { query, mutation } from "./_generated/server";
 import { v } from "convex/values";
 
+export const listAll = query({
+  args: {},
+  handler: async (ctx) => {
+    return await ctx.db.query("users").collect();
+  },
+});
+
 export const getByEmail = query({
   args: { email: v.string() },
   handler: async (ctx, args) => {

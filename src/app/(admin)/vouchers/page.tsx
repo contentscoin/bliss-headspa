@@ -5,6 +5,7 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import type { Id } from "../../../../convex/_generated/dataModel";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 const statusConfig: Record<string, { label: string; className: string }> = {
   issued: { label: "발행됨", className: "bg-blue-100 text-blue-700" },
@@ -36,15 +37,20 @@ export default function VouchersPage() {
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!buyerId) return;
-    await createVoucher({
-      buyerId: buyerId as Id<"users">,
-      expiresAt: new Date(expiresAt).getTime(),
-      count: parseInt(count) || 1,
-    });
-    setDialogOpen(false);
-    setBuyerId("");
-    setExpiresAt("");
-    setCount("1");
+    try {
+      await createVoucher({
+        buyerId: buyerId as Id<"users">,
+        expiresAt: new Date(expiresAt).getTime(),
+        count: parseInt(count) || 1,
+      });
+      toast.success("바우처가 발행되었습니다");
+      setDialogOpen(false);
+      setBuyerId("");
+      setExpiresAt("");
+      setCount("1");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "오류가 발생했습니다");
+    }
   };
 
   const getBranchName = (branchId?: Id<"branches">) => {
@@ -58,6 +64,19 @@ export default function VouchersPage() {
   };
 
   const fmtDate = (ts: number) => new Date(ts).toLocaleDateString("ko-KR");
+
+  if (allVouchers === undefined) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <h1 className="text-3xl font-bold mb-6">바우처 관리</h1>
+        <div className="space-y-3">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="h-12 bg-muted rounded animate-pulse" />
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -118,7 +137,14 @@ export default function VouchersPage() {
                     <Button
                       variant="destructive"
                       size="sm"
-                      onClick={() => cancelVoucher({ voucherId: v._id })}
+                      onClick={async () => {
+                        try {
+                          await cancelVoucher({ voucherId: v._id });
+                          toast.success("바우처가 취소되었습니다");
+                        } catch (err) {
+                          toast.error(err instanceof Error ? err.message : "오류가 발생했습니다");
+                        }
+                      }}
                     >
                       취소
                     </Button>

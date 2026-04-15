@@ -5,6 +5,7 @@ import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import type { Id } from "../../../../convex/_generated/dataModel";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 const statusConfig: Record<string, { label: string; className: string }> = {
   confirmed: { label: "확정", className: "bg-blue-100 text-blue-700" },
@@ -38,8 +39,26 @@ export default function ReservationsPage() {
     reservationId: Id<"reservations">,
     status: ReservationStatus
   ) => {
-    await updateStatus({ reservationId, status });
+    try {
+      await updateStatus({ reservationId, status });
+      toast.success("상태가 변경되었습니다");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "오류가 발생했습니다");
+    }
   };
+
+  if (allReservations === undefined) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <h1 className="text-3xl font-bold mb-6">예약 관리</h1>
+        <div className="space-y-3">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="h-12 bg-muted rounded animate-pulse" />
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto px-4 py-8">

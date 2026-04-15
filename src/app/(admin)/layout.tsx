@@ -10,6 +10,7 @@ import {
   Building2,
   Ticket,
   CalendarCheck,
+  Users,
   Menu,
 } from "lucide-react";
 import ProtectedRoute from "@/components/shared/ProtectedRoute";
@@ -19,6 +20,7 @@ const navItems = [
   { href: "/branches", label: "지점관리", icon: Building2 },
   { href: "/vouchers", label: "바우처관리", icon: Ticket },
   { href: "/reservations", label: "예약관리", icon: CalendarCheck },
+  { href: "/users", label: "계정관리", icon: Users },
 ];
 
 function NavLink({
