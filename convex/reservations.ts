@@ -8,6 +8,13 @@ function generateReservationNo(): string {
   return `RSV-${ymd}-${rand}`;
 }
 
+export const listAll = query({
+  args: {},
+  handler: async (ctx) => {
+    return await ctx.db.query("reservations").collect();
+  },
+});
+
 export const getByBranch = query({
   args: {
     branchId: v.id("branches"),

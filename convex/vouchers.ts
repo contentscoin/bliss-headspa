@@ -10,6 +10,13 @@ function generateVoucherCode(): string {
   return code;
 }
 
+export const listAll = query({
+  args: {},
+  handler: async (ctx) => {
+    return await ctx.db.query("vouchers").collect();
+  },
+});
+
 export const getByCode = query({
   args: { voucherCode: v.string() },
   handler: async (ctx, args) => {

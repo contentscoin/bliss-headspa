@@ -73,4 +73,12 @@ export default defineSchema({
     .index("by_date", ["reservationDate"])
     .index("by_status", ["status"])
     .index("by_customerPhone", ["customerPhone"]),
+
+  sessions: defineTable({
+    userId: v.id("users"),
+    token: v.string(),
+    expiresAt: v.number(),
+  })
+    .index("by_token", ["token"])
+    .index("by_user", ["userId"]),
 });
