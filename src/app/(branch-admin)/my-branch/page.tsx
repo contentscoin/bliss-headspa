@@ -6,6 +6,7 @@ import { api } from "../../../../convex/_generated/api";
 import type { Id } from "../../../../convex/_generated/dataModel";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth";
+import { toast } from "sonner";
 
 const statusConfig: Record<string, { label: string; className: string }> = {
   confirmed: { label: "확정", className: "bg-blue-100 text-blue-700" },
@@ -18,6 +19,7 @@ type ReservationStatus = "confirmed" | "completed" | "cancelled" | "no_show";
 
 export default function MyBranchPage() {
   const today = new Date().toISOString().slice(0, 10);
+  const tomorrow = new Date(Date.now() + 86400000).toISOString().slice(0, 10);
   const [selectedDate, setSelectedDate] = useState(today);
 
   const { user } = useAuth();
@@ -37,13 +39,25 @@ export default function MyBranchPage() {
 
   const confirmedToday = allForToday?.filter((r) => r.status === "confirmed").length ?? 0;
   const completedToday = allForToday?.filter((r) => r.status === "completed").length ?? 0;
+  const cancelledToday = allForToday?.filter((r) => r.status === "cancelled").length ?? 0;
   const totalToday = allForToday?.length ?? 0;
+
+  // Summary counts for selected date
+  const selectedTotal = reservations?.length ?? 0;
+  const selectedConfirmed = reservations?.filter((r) => r.status === "confirmed").length ?? 0;
+  const selectedCompleted = reservations?.filter((r) => r.status === "completed").length ?? 0;
+  const selectedCancelled = reservations?.filter((r) => r.status === "cancelled").length ?? 0;
 
   const handleStatusChange = async (
     reservationId: Id<"reservations">,
     status: ReservationStatus
   ) => {
-    await updateStatus({ reservationId, status });
+    try {
+      await updateStatus({ reservationId, status });
+      toast.success(`상태가 "${statusConfig[status].label}"(으)로 변경되었습니다.`);
+    } catch {
+      toast.error("상태 변경에 실패했습니다.");
+    }
   };
 
   if (!branchId) {
@@ -59,31 +73,59 @@ export default function MyBranchPage() {
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold mb-6">내 지점 예약</h1>
 
-      {/* Today Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+      {/* Summary Cards for selected date */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
         <div className="rounded-xl border p-4 bg-blue-50 text-blue-700">
-          <p className="text-sm font-medium opacity-80">오늘 전체</p>
-          <p className="text-2xl font-bold mt-1">{totalToday}건</p>
+          <p className="text-sm font-medium opacity-80">전체</p>
+          <p className="text-2xl font-bold mt-1">{selectedTotal}건</p>
         </div>
         <div className="rounded-xl border p-4 bg-amber-50 text-amber-700">
-          <p className="text-sm font-medium opacity-80">확정 대기</p>
-          <p className="text-2xl font-bold mt-1">{confirmedToday}건</p>
+          <p className="text-sm font-medium opacity-80">확정</p>
+          <p className="text-2xl font-bold mt-1">{selectedConfirmed}건</p>
         </div>
         <div className="rounded-xl border p-4 bg-green-50 text-green-700">
           <p className="text-sm font-medium opacity-80">완료</p>
-          <p className="text-2xl font-bold mt-1">{completedToday}건</p>
+          <p className="text-2xl font-bold mt-1">{selectedCompleted}건</p>
+        </div>
+        <div className="rounded-xl border p-4 bg-gray-50 text-gray-700">
+          <p className="text-sm font-medium opacity-80">취소</p>
+          <p className="text-2xl font-bold mt-1">{selectedCancelled}건</p>
         </div>
       </div>
 
-      {/* Date Filter */}
-      <div className="mb-4">
-        <label className="block text-xs font-medium mb-1 text-gray-500">날짜 선택</label>
-        <input
-          type="date"
-          className="rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-          value={selectedDate}
-          onChange={(e) => setSelectedDate(e.target.value)}
-        />
+      {/* Date Filter with quick tabs */}
+      <div className="mb-4 flex items-end gap-3">
+        <div>
+          <label className="block text-xs font-medium mb-1 text-gray-500">날짜 선택</label>
+          <input
+            type="date"
+            className="rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            value={selectedDate}
+            onChange={(e) => setSelectedDate(e.target.value)}
+          />
+        </div>
+        <div className="flex gap-1">
+          <button
+            onClick={() => setSelectedDate(today)}
+            className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+              selectedDate === today
+                ? "bg-primary text-primary-foreground"
+                : "bg-gray-100 hover:bg-gray-200 text-gray-700"
+            }`}
+          >
+            오늘
+          </button>
+          <button
+            onClick={() => setSelectedDate(tomorrow)}
+            className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+              selectedDate === tomorrow
+                ? "bg-primary text-primary-foreground"
+                : "bg-gray-100 hover:bg-gray-200 text-gray-700"
+            }`}
+          >
+            내일
+          </button>
+        </div>
       </div>
 
       {/* Reservations Table */}
@@ -100,6 +142,17 @@ export default function MyBranchPage() {
             </tr>
           </thead>
           <tbody className="divide-y">
+            {reservations === undefined && (
+              Array.from({ length: 5 }).map((_, i) => (
+                <tr key={i}>
+                  {Array.from({ length: 6 }).map((_, j) => (
+                    <td key={j} className="px-4 py-3">
+                      <div className="h-4 w-20 animate-pulse rounded bg-gray-200" />
+                    </td>
+                  ))}
+                </tr>
+              ))
+            )}
             {reservations?.map((r) => (
               <tr key={r._id} className="hover:bg-gray-50">
                 <td className="px-4 py-3 font-mono text-xs">{r.reservationNo}</td>

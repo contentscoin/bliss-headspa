@@ -15,14 +15,29 @@ const statusConfig: Record<string, { label: string; className: string }> = {
   cancelled: { label: "취소됨", className: "bg-red-100 text-red-700" },
 };
 
+type VoucherStatus = "issued" | "used" | "expired" | "cancelled";
+
+const statusTabs: { label: string; value: VoucherStatus | "all" }[] = [
+  { label: "전체", value: "all" },
+  { label: "발행", value: "issued" },
+  { label: "사용", value: "used" },
+  { label: "만료", value: "expired" },
+  { label: "취소", value: "cancelled" },
+];
+
 export default function MyVouchersPage() {
   const { user } = useAuth();
   const buyerId = user?._id as Id<"users"> | undefined;
+  const [statusFilter, setStatusFilter] = useState<VoucherStatus | "all">("all");
 
   const vouchers = useQuery(
     api.vouchers.listByBuyer,
     buyerId ? { buyerId } : "skip"
   );
+
+  const filteredVouchers = statusFilter === "all"
+    ? vouchers
+    : vouchers?.filter((v) => v.status === statusFilter);
 
   const branches = useQuery(api.branches.list, {});
 
@@ -74,6 +89,23 @@ export default function MyVouchersPage() {
         </Button>
       </div>
 
+      {/* Status Filter Tabs */}
+      <div className="flex gap-1 mb-4">
+        {statusTabs.map((tab) => (
+          <button
+            key={tab.value}
+            onClick={() => setStatusFilter(tab.value)}
+            className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
+              statusFilter === tab.value
+                ? "bg-primary text-primary-foreground"
+                : "bg-gray-100 hover:bg-gray-200 text-gray-700"
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
       <div className="overflow-x-auto rounded-lg border">
         <table className="w-full text-sm">
           <thead className="bg-gray-50">
@@ -87,7 +119,7 @@ export default function MyVouchersPage() {
             </tr>
           </thead>
           <tbody className="divide-y">
-            {vouchers?.map((v) => (
+            {filteredVouchers?.map((v) => (
               <tr key={v._id} className="hover:bg-gray-50">
                 <td className="px-4 py-3 font-mono">{v.voucherCode}</td>
                 <td className="px-4 py-3">
@@ -103,7 +135,7 @@ export default function MyVouchersPage() {
                 <td className="px-4 py-3">{getBranchName(v.usedBranchId)}</td>
               </tr>
             ))}
-            {vouchers?.length === 0 && (
+            {filteredVouchers?.length === 0 && (
               <tr>
                 <td colSpan={6} className="px-4 py-8 text-center text-gray-400">
                   바우처가 없습니다.

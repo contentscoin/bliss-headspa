@@ -11,6 +11,7 @@ import {
   Ticket,
   CalendarCheck,
   Users,
+  MessageSquare,
   Menu,
   LogOut,
 } from "lucide-react";
@@ -23,6 +24,7 @@ const navItems = [
   { href: "/vouchers", label: "바우처관리", icon: Ticket },
   { href: "/reservations", label: "예약관리", icon: CalendarCheck },
   { href: "/users", label: "계정관리", icon: Users },
+  { href: "/sms-logs", label: "SMS 로그", icon: MessageSquare },
 ];
 
 function NavLink({

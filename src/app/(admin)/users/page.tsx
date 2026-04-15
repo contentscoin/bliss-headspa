@@ -37,7 +37,7 @@ const emptyForm: UserForm = {
 export default function UsersPage() {
   const users = useQuery(api.users.listAll);
   const branches = useQuery(api.branches.list, {});
-  const registerUser = useMutation(api.auth.register);
+  const createUser = useMutation(api.users.create);
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [form, setForm] = useState<UserForm>(emptyForm);
@@ -71,12 +71,15 @@ export default function UsersPage() {
     e.preventDefault();
     if (!validate()) return;
     try {
-      await registerUser({
+      await createUser({
         name: form.name.trim(),
         email: form.email.trim(),
         password: form.password,
         phone: form.phone.trim(),
         role: form.role,
+        ...(form.role === "branch_admin" && form.branchId
+          ? { branchId: form.branchId as Id<"branches"> }
+          : {}),
       });
       toast.success("계정이 생성되었습니다");
       setDialogOpen(false);

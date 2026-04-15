@@ -16,6 +16,8 @@ const statusConfig: Record<string, { label: string; className: string }> = {
 
 type ReservationStatus = "confirmed" | "completed" | "cancelled" | "no_show";
 
+type StatusFilter = "all" | ReservationStatus;
+
 export default function ReservationsPage() {
   const allReservations = useQuery(api.reservations.listAll);
   const branches = useQuery(api.branches.list, {});
@@ -23,10 +25,12 @@ export default function ReservationsPage() {
 
   const [branchFilter, setBranchFilter] = useState<string>("all");
   const [dateFilter, setDateFilter] = useState("");
+  const [selectedStatus, setSelectedStatus] = useState<StatusFilter>("all");
 
   const reservations = allReservations?.filter((r) => {
     if (branchFilter !== "all" && r.branchId !== branchFilter) return false;
     if (dateFilter && r.reservationDate !== dateFilter) return false;
+    if (selectedStatus !== "all" && r.status !== selectedStatus) return false;
     return true;
   });
 
@@ -64,6 +68,22 @@ export default function ReservationsPage() {
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold mb-6">예약 관리</h1>
 
+      {/* Status Tabs */}
+      <div className="flex gap-2 mb-4 flex-wrap">
+        {(["all", "confirmed", "completed", "cancelled", "no_show"] as StatusFilter[]).map(
+          (s) => (
+            <Button
+              key={s}
+              variant={selectedStatus === s ? "default" : "outline"}
+              size="sm"
+              onClick={() => setSelectedStatus(s)}
+            >
+              {s === "all" ? "전체" : statusConfig[s].label}
+            </Button>
+          )
+        )}
+      </div>
+
       {/* Filters */}
       <div className="flex gap-4 mb-4 flex-wrap">
         <div>
@@ -90,7 +110,7 @@ export default function ReservationsPage() {
             onChange={(e) => setDateFilter(e.target.value)}
           />
         </div>
-        {(branchFilter !== "all" || dateFilter) && (
+        {(branchFilter !== "all" || dateFilter || selectedStatus !== "all") && (
           <div className="flex items-end">
             <Button
               variant="ghost"
@@ -98,6 +118,7 @@ export default function ReservationsPage() {
               onClick={() => {
                 setBranchFilter("all");
                 setDateFilter("");
+                setSelectedStatus("all");
               }}
             >
               필터 초기화
