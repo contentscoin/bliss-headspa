@@ -2,16 +2,18 @@
 
 import { useState } from "react";
 import { useQuery, useMutation } from "convex/react";
-import { api } from "../../../../convex/_generated/api";
-import type { Id } from "../../../../convex/_generated/dataModel";
+import { api } from "../../../../../convex/_generated/api";
+import type { Id } from "../../../../../convex/_generated/dataModel";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import StatusBadge from "@/components/shared/StatusBadge";
+import PageHeader from "@/components/shared/PageHeader";
 
-const statusConfig: Record<string, { label: string; className: string }> = {
-  confirmed: { label: "확정", className: "bg-blue-100 text-blue-700" },
-  completed: { label: "완료", className: "bg-green-100 text-green-700" },
-  cancelled: { label: "취소", className: "bg-gray-100 text-gray-500" },
-  no_show: { label: "노쇼", className: "bg-red-100 text-red-700" },
+const statusLabels: Record<string, string> = {
+  confirmed: "확정",
+  completed: "완료",
+  cancelled: "취소",
+  no_show: "노쇼",
 };
 
 type ReservationStatus = "confirmed" | "completed" | "cancelled" | "no_show";
@@ -65,31 +67,34 @@ export default function ReservationsPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-6">예약 관리</h1>
+    <div className="space-y-6 animate-fade-in">
+      <PageHeader title="예약 관리" description="전체 예약 현황을 관리합니다." />
 
       {/* Status Tabs */}
-      <div className="flex gap-2 mb-4 flex-wrap">
+      <div className="flex flex-nowrap overflow-x-auto gap-1.5 pb-1">
         {(["all", "confirmed", "completed", "cancelled", "no_show"] as StatusFilter[]).map(
           (s) => (
-            <Button
+            <button
               key={s}
-              variant={selectedStatus === s ? "default" : "outline"}
-              size="sm"
+              className={`shrink-0 rounded-full px-4 py-2 text-sm font-medium transition-all duration-200 ${
+                selectedStatus === s
+                  ? "bg-brand-navy text-white shadow-sm"
+                  : "bg-secondary text-muted-foreground hover:bg-muted hover:text-foreground"
+              }`}
               onClick={() => setSelectedStatus(s)}
             >
-              {s === "all" ? "전체" : statusConfig[s].label}
-            </Button>
+              {s === "all" ? "전체" : statusLabels[s]}
+            </button>
           )
         )}
       </div>
 
       {/* Filters */}
-      <div className="flex gap-4 mb-4 flex-wrap">
+      <div className="flex gap-4 flex-wrap">
         <div>
-          <label className="block text-xs font-medium mb-1 text-gray-500">지점</label>
+          <label className="block text-xs font-medium mb-1 text-muted-foreground">지점</label>
           <select
-            className="rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
             value={branchFilter}
             onChange={(e) => setBranchFilter(e.target.value)}
           >
@@ -102,10 +107,10 @@ export default function ReservationsPage() {
           </select>
         </div>
         <div>
-          <label className="block text-xs font-medium mb-1 text-gray-500">날짜</label>
+          <label className="block text-xs font-medium mb-1 text-muted-foreground">날짜</label>
           <input
             type="date"
-            className="rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
             value={dateFilter}
             onChange={(e) => setDateFilter(e.target.value)}
           />
@@ -127,9 +132,9 @@ export default function ReservationsPage() {
         )}
       </div>
 
-      <div className="overflow-x-auto rounded-lg border">
+      <div className="overflow-x-auto rounded-2xl border border-border bg-card shadow-brand">
         <table className="w-full text-sm">
-          <thead className="bg-gray-50">
+          <thead className="bg-muted/50">
             <tr>
               <th className="px-4 py-3 text-left font-medium">예약번호</th>
               <th className="px-4 py-3 text-left font-medium">고객명</th>
@@ -142,18 +147,14 @@ export default function ReservationsPage() {
           </thead>
           <tbody className="divide-y">
             {reservations?.map((r) => (
-              <tr key={r._id} className="hover:bg-gray-50">
+              <tr key={r._id} className="hover:bg-muted/30 transition-colors">
                 <td className="px-4 py-3 font-mono text-xs">{r.reservationNo}</td>
                 <td className="px-4 py-3">{r.customerName}</td>
                 <td className="px-4 py-3">{getBranchName(r.branchId)}</td>
                 <td className="px-4 py-3">{r.reservationDate}</td>
                 <td className="px-4 py-3">{r.reservationTime}</td>
                 <td className="px-4 py-3">
-                  <span
-                    className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${statusConfig[r.status]?.className}`}
-                  >
-                    {statusConfig[r.status]?.label}
-                  </span>
+                  <StatusBadge status={r.status} type="reservation" />
                 </td>
                 <td className="px-4 py-3">
                   <div className="flex gap-1 flex-wrap">
@@ -163,9 +164,9 @@ export default function ReservationsPage() {
                         <button
                           key={s}
                           onClick={() => handleStatusChange(r._id, s)}
-                          className="rounded px-2 py-1 text-xs font-medium bg-gray-100 hover:bg-gray-200 transition"
+                          className="rounded-lg px-2 py-1 text-xs font-medium bg-secondary text-foreground hover:bg-muted transition-colors"
                         >
-                          {statusConfig[s].label}
+                          {statusLabels[s]}
                         </button>
                       ))}
                   </div>
@@ -174,7 +175,7 @@ export default function ReservationsPage() {
             ))}
             {reservations?.length === 0 && (
               <tr>
-                <td colSpan={7} className="px-4 py-8 text-center text-gray-400">
+                <td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">
                   예약이 없습니다.
                 </td>
               </tr>

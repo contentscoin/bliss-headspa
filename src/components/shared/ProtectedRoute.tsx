@@ -33,7 +33,10 @@ export default function ProtectedRoute({
   if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <p className="text-gray-500">로딩 중...</p>
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-8 h-8 rounded-full border-2 border-muted border-t-brand-gold animate-spin" />
+          <p className="text-sm text-muted-foreground">로딩 중...</p>
+        </div>
       </div>
     );
   }
@@ -44,7 +47,7 @@ export default function ProtectedRoute({
     return (
       <div className="flex min-h-screen flex-col items-center justify-center gap-4">
         <h1 className="text-2xl font-bold">접근 권한 없음</h1>
-        <p className="text-gray-600">이 페이지에 접근할 권한이 없습니다.</p>
+        <p className="text-muted-foreground">이 페이지에 접근할 권한이 없습니다.</p>
         <button
           onClick={() => router.back()}
           className="text-primary underline"

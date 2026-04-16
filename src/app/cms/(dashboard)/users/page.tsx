@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { useQuery, useMutation } from "convex/react";
-import { api } from "../../../../convex/_generated/api";
-import type { Id } from "../../../../convex/_generated/dataModel";
+import { api } from "../../../../../convex/_generated/api";
+import type { Id } from "../../../../../convex/_generated/dataModel";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Pencil } from "lucide-react";
@@ -183,9 +183,9 @@ export default function UsersPage() {
         </Button>
       </div>
 
-      <div className="overflow-x-auto rounded-lg border">
+      <div className="overflow-x-auto rounded-2xl border border-border bg-card shadow-brand">
         <table className="w-full text-sm">
-          <thead className="bg-gray-50">
+          <thead className="bg-muted/50">
             <tr>
               <th className="px-4 py-3 text-left font-medium">이름</th>
               <th className="px-4 py-3 text-left font-medium">아이디</th>
@@ -196,11 +196,11 @@ export default function UsersPage() {
           </thead>
           <tbody className="divide-y">
             {users.map((u) => (
-              <tr key={u._id} className="hover:bg-gray-50">
+              <tr key={u._id} className="hover:bg-muted/30 transition-colors">
                 <td className="px-4 py-3">{u.name}</td>
                 <td className="px-4 py-3">{u.email}</td>
                 <td className="px-4 py-3">
-                  <span className="inline-block rounded-full px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-700">
+                  <span className="inline-block rounded-full px-2 py-0.5 text-xs font-medium bg-secondary text-secondary-foreground">
                     {roleLabels[u.role as Role] ?? u.role}
                   </span>
                 </td>
@@ -220,7 +220,7 @@ export default function UsersPage() {
             ))}
             {users.length === 0 && (
               <tr>
-                <td colSpan={5} className="px-4 py-8 text-center text-gray-400">
+                <td colSpan={5} className="px-4 py-8 text-center text-muted-foreground">
                   등록된 사용자가 없습니다.
                 </td>
               </tr>
@@ -232,57 +232,57 @@ export default function UsersPage() {
       {/* Create Dialog */}
       {dialogOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-md p-6 mx-4">
+          <div className="bg-card rounded-2xl shadow-brand-lg border border-border w-full max-w-md p-6 mx-4">
             <h2 className="text-xl font-bold mb-4">계정 추가</h2>
             <form onSubmit={handleSubmit} className="space-y-3">
               <div>
                 <label className="block text-sm font-medium mb-1">이름</label>
                 <input
-                  className={`w-full min-h-[44px] rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.name ? "border-red-500" : ""}`}
+                  className={`w-full min-h-[44px] rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring ${errors.name ? "border-destructive" : ""}`}
                   value={form.name}
                   onChange={(e) => setField("name", e.target.value)}
                   required
                 />
-                {errors.name && <p className="text-sm text-red-600 mt-1">{errors.name}</p>}
+                {errors.name && <p className="text-sm text-destructive mt-1">{errors.name}</p>}
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1">아이디</label>
                 <input
                   type="text"
-                  className={`w-full min-h-[44px] rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.email ? "border-red-500" : ""}`}
+                  className={`w-full min-h-[44px] rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring ${errors.email ? "border-destructive" : ""}`}
                   value={form.email}
                   onChange={(e) => setField("email", e.target.value)}
                   placeholder="로그인에 사용할 아이디"
                   required
                 />
-                {errors.email && <p className="text-sm text-red-600 mt-1">{errors.email}</p>}
+                {errors.email && <p className="text-sm text-destructive mt-1">{errors.email}</p>}
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1">비밀번호</label>
                 <input
                   type="password"
-                  className={`w-full min-h-[44px] rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.password ? "border-red-500" : ""}`}
+                  className={`w-full min-h-[44px] rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring ${errors.password ? "border-destructive" : ""}`}
                   value={form.password}
                   onChange={(e) => setField("password", e.target.value)}
                   required
                 />
-                {errors.password && <p className="text-sm text-red-600 mt-1">{errors.password}</p>}
+                {errors.password && <p className="text-sm text-destructive mt-1">{errors.password}</p>}
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1">연락처</label>
                 <input
-                  className={`w-full min-h-[44px] rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.phone ? "border-red-500" : ""}`}
+                  className={`w-full min-h-[44px] rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring ${errors.phone ? "border-destructive" : ""}`}
                   value={form.phone}
                   onChange={(e) => setField("phone", e.target.value)}
                   placeholder="010-1234-5678"
                   required
                 />
-                {errors.phone && <p className="text-sm text-red-600 mt-1">{errors.phone}</p>}
+                {errors.phone && <p className="text-sm text-destructive mt-1">{errors.phone}</p>}
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1">역할</label>
                 <select
-                  className="w-full min-h-[44px] rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full min-h-[44px] rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                   value={form.role}
                   onChange={(e) => setField("role", e.target.value)}
                 >
@@ -297,7 +297,7 @@ export default function UsersPage() {
                 <div>
                   <label className="block text-sm font-medium mb-1">연결 지점</label>
                   <select
-                    className={`w-full min-h-[44px] rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.branchId ? "border-red-500" : ""}`}
+                    className={`w-full min-h-[44px] rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring ${errors.branchId ? "border-destructive" : ""}`}
                     value={form.branchId}
                     onChange={(e) => setField("branchId", e.target.value)}
                   >
@@ -308,7 +308,7 @@ export default function UsersPage() {
                       </option>
                     ))}
                   </select>
-                  {errors.branchId && <p className="text-sm text-red-600 mt-1">{errors.branchId}</p>}
+                  {errors.branchId && <p className="text-sm text-destructive mt-1">{errors.branchId}</p>}
                 </div>
               )}
               <div className="flex justify-end gap-2 pt-2">
@@ -329,34 +329,34 @@ export default function UsersPage() {
       {/* Edit Dialog */}
       {editDialogOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-md p-6 mx-4">
+          <div className="bg-card rounded-2xl shadow-brand-lg border border-border w-full max-w-md p-6 mx-4">
             <h2 className="text-xl font-bold mb-4">계정 수정</h2>
             <form onSubmit={handleEditSubmit} className="space-y-3">
               <div>
                 <label className="block text-sm font-medium mb-1">이름</label>
                 <input
-                  className={`w-full min-h-[44px] rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${editErrors.name ? "border-red-500" : ""}`}
+                  className={`w-full min-h-[44px] rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring ${editErrors.name ? "border-destructive" : ""}`}
                   value={editForm.name}
                   onChange={(e) => setEditField("name", e.target.value)}
                   required
                 />
-                {editErrors.name && <p className="text-sm text-red-600 mt-1">{editErrors.name}</p>}
+                {editErrors.name && <p className="text-sm text-destructive mt-1">{editErrors.name}</p>}
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1">연락처</label>
                 <input
-                  className={`w-full min-h-[44px] rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${editErrors.phone ? "border-red-500" : ""}`}
+                  className={`w-full min-h-[44px] rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring ${editErrors.phone ? "border-destructive" : ""}`}
                   value={editForm.phone}
                   onChange={(e) => setEditField("phone", e.target.value)}
                   placeholder="010-1234-5678"
                   required
                 />
-                {editErrors.phone && <p className="text-sm text-red-600 mt-1">{editErrors.phone}</p>}
+                {editErrors.phone && <p className="text-sm text-destructive mt-1">{editErrors.phone}</p>}
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1">역할</label>
                 <select
-                  className="w-full min-h-[44px] rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full min-h-[44px] rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                   value={editForm.role}
                   onChange={(e) => setEditField("role", e.target.value)}
                 >
@@ -371,7 +371,7 @@ export default function UsersPage() {
                 <div>
                   <label className="block text-sm font-medium mb-1">연결 지점</label>
                   <select
-                    className={`w-full min-h-[44px] rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${editErrors.branchId ? "border-red-500" : ""}`}
+                    className={`w-full min-h-[44px] rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring ${editErrors.branchId ? "border-destructive" : ""}`}
                     value={editForm.branchId}
                     onChange={(e) => setEditField("branchId", e.target.value)}
                   >
@@ -382,7 +382,7 @@ export default function UsersPage() {
                       </option>
                     ))}
                   </select>
-                  {editErrors.branchId && <p className="text-sm text-red-600 mt-1">{editErrors.branchId}</p>}
+                  {editErrors.branchId && <p className="text-sm text-destructive mt-1">{editErrors.branchId}</p>}
                 </div>
               )}
               <div className="flex justify-end gap-2 pt-2">

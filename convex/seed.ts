@@ -21,6 +21,21 @@ export const seedData = internalMutation({
       return "시드 데이터가 이미 존재합니다. 중복 생성을 건너뜁니다.";
     }
 
+    // Migrate old admin account if exists
+    const oldAdmin = await ctx.db
+      .query("users")
+      .withIndex("by_email", (q) => q.eq("email", "admin@blissheadspa.com"))
+      .first();
+
+    if (oldAdmin) {
+      const adminPasswordHash = await hashPassword("1234");
+      await ctx.db.patch(oldAdmin._id, {
+        email: "admin",
+        passwordHash: adminPasswordHash,
+      });
+      return "기존 admin 계정을 마이그레이션했습니다 (admin / 1234).";
+    }
+
     const created: string[] = [];
 
     // Create super_admin user (login: admin / 1234)
@@ -36,7 +51,7 @@ export const seedData = internalMutation({
 
     // Create sample branch
     await ctx.db.insert("branches", {
-      name: "블리스 헤드스파 강남점",
+      name: "메디컬헤드스파 강남점",
       region: "서울",
       address: "서울특별시 강남구 테헤란로 123",
       phone: "02-1234-5678",
@@ -45,7 +60,7 @@ export const seedData = internalMutation({
       businessHours: "10:00-20:00",
       isActive: true,
     });
-    created.push("지점 (블리스 헤드스파 강남점)");
+    created.push("지점 (메디컬헤드스파 강남점)");
 
     // Create buyer user
     const buyerPasswordHash = await hashPassword("buyer1234");

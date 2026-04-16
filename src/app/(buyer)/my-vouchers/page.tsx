@@ -7,13 +7,10 @@ import type { Id } from "../../../../convex/_generated/dataModel";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { useAuth } from "@/lib/auth";
-
-const statusConfig: Record<string, { label: string; className: string }> = {
-  issued: { label: "발행됨", className: "bg-blue-100 text-blue-700" },
-  used: { label: "사용됨", className: "bg-green-100 text-green-700" },
-  expired: { label: "만료됨", className: "bg-gray-100 text-gray-500" },
-  cancelled: { label: "취소됨", className: "bg-red-100 text-red-700" },
-};
+import { Download, Ticket } from "lucide-react";
+import StatusBadge from "@/components/shared/StatusBadge";
+import EmptyState from "@/components/shared/EmptyState";
+import PageHeader from "@/components/shared/PageHeader";
 
 type VoucherStatus = "issued" | "used" | "expired" | "cancelled";
 
@@ -74,31 +71,40 @@ export default function MyVouchersPage() {
   if (!buyerId) {
     return (
       <div className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold mb-4">내 바우처</h1>
-        <p className="text-gray-500">구매자 계정으로 로그인해 주세요.</p>
+        <PageHeader title="내 바우처" />
+        <EmptyState
+          icon={Ticket}
+          title="로그인이 필요합니다"
+          description="구매자 계정으로 로그인해 주세요."
+        />
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-3xl font-bold">내 바우처</h1>
-        <Button variant="outline" onClick={handleExcelDownload} disabled={isExporting}>
+    <div className="container mx-auto px-4 sm:px-6 py-8 space-y-6 animate-fade-in">
+      <PageHeader title="내 바우처" description="구매한 바우처 현황을 확인하세요.">
+        <Button
+          variant="outline"
+          onClick={handleExcelDownload}
+          disabled={isExporting}
+          className="gap-2"
+        >
+          <Download className="size-4" />
           {isExporting ? "다운로드 중..." : "엑셀 다운로드"}
         </Button>
-      </div>
+      </PageHeader>
 
       {/* Status Filter Tabs */}
-      <div className="flex gap-1 mb-4">
+      <div className="flex flex-nowrap overflow-x-auto gap-1.5 pb-1 -mx-1 px-1">
         {statusTabs.map((tab) => (
           <button
             key={tab.value}
             onClick={() => setStatusFilter(tab.value)}
-            className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
+            className={`shrink-0 rounded-full px-4 py-2 text-sm font-medium transition-all duration-200 ${
               statusFilter === tab.value
-                ? "bg-primary text-primary-foreground"
-                : "bg-gray-100 hover:bg-gray-200 text-gray-700"
+                ? "bg-brand-navy text-white shadow-sm"
+                : "bg-secondary text-muted-foreground hover:bg-muted hover:text-foreground"
             }`}
           >
             {tab.label}
@@ -106,38 +112,35 @@ export default function MyVouchersPage() {
         ))}
       </div>
 
-      <div className="overflow-x-auto rounded-lg border">
+      <div className="overflow-x-auto rounded-2xl border border-border bg-card shadow-brand">
         <table className="w-full text-sm">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-4 py-3 text-left font-medium">바우처 코드</th>
-              <th className="px-4 py-3 text-left font-medium">상태</th>
-              <th className="px-4 py-3 text-left font-medium">발행일</th>
-              <th className="px-4 py-3 text-left font-medium">만료일</th>
-              <th className="px-4 py-3 text-left font-medium">사용일</th>
-              <th className="px-4 py-3 text-left font-medium">사용 지점</th>
+          <thead>
+            <tr className="border-b bg-muted/50">
+              <th className="px-4 py-3 text-left font-medium text-muted-foreground">바우처 코드</th>
+              <th className="px-4 py-3 text-left font-medium text-muted-foreground">상태</th>
+              <th className="px-4 py-3 text-left font-medium text-muted-foreground">발행일</th>
+              <th className="px-4 py-3 text-left font-medium text-muted-foreground">만료일</th>
+              <th className="px-4 py-3 text-left font-medium text-muted-foreground">사용일</th>
+              <th className="px-4 py-3 text-left font-medium text-muted-foreground">사용 지점</th>
             </tr>
           </thead>
-          <tbody className="divide-y">
+          <tbody>
             {filteredVouchers?.map((v) => (
-              <tr key={v._id} className="hover:bg-gray-50">
-                <td className="px-4 py-3 font-mono">{v.voucherCode}</td>
+              <tr key={v._id} className="border-b last:border-0 hover:bg-muted/30 transition-colors">
+                <td className="px-4 py-3 font-mono text-xs">{v.voucherCode}</td>
                 <td className="px-4 py-3">
-                  <span
-                    className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${statusConfig[v.status]?.className}`}
-                  >
-                    {statusConfig[v.status]?.label}
-                  </span>
+                  <StatusBadge status={v.status} type="voucher" />
                 </td>
-                <td className="px-4 py-3">{fmtDate(v.issuedAt)}</td>
-                <td className="px-4 py-3">{fmtDate(v.expiresAt)}</td>
-                <td className="px-4 py-3">{v.usedAt ? fmtDate(v.usedAt) : "-"}</td>
+                <td className="px-4 py-3 text-muted-foreground">{fmtDate(v.issuedAt)}</td>
+                <td className="px-4 py-3 text-muted-foreground">{fmtDate(v.expiresAt)}</td>
+                <td className="px-4 py-3 text-muted-foreground">{v.usedAt ? fmtDate(v.usedAt) : "-"}</td>
                 <td className="px-4 py-3">{getBranchName(v.usedBranchId)}</td>
               </tr>
             ))}
             {filteredVouchers?.length === 0 && (
               <tr>
-                <td colSpan={6} className="px-4 py-8 text-center text-gray-400">
+                <td colSpan={6} className="px-4 py-12 text-center text-muted-foreground">
+                  <Ticket className="size-8 mx-auto mb-2 opacity-30" />
                   바우처가 없습니다.
                 </td>
               </tr>

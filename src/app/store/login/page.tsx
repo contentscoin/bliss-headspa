@@ -4,7 +4,10 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import { Loader2, Lock, User, Building2 } from "lucide-react";
 
 export default function StoreLoginPage() {
   const [loginId, setLoginId] = useState("");
@@ -53,65 +56,81 @@ export default function StoreLoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50">
-      <div className="w-full max-w-md space-y-6 px-4">
-        <div className="rounded-lg border bg-white p-8 shadow-sm">
-          <div className="mb-8 text-center">
-            <h1 className="text-3xl font-bold">BLISS HEADSPA</h1>
-            <p className="mt-2 text-gray-600">점주 로그인</p>
+    <div className="flex min-h-screen items-center justify-center bg-gradient-warm px-4">
+      <div className="w-full max-w-[400px] space-y-6 animate-slide-up">
+        {/* Brand Header */}
+        <div className="text-center">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-brand-navy mb-4">
+            <Building2 className="size-8 text-brand-gold" />
           </div>
+          <h1 className="text-2xl font-bold text-foreground">지점 관리</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Medical Headspa 점주 로그인
+          </p>
+        </div>
 
+        {/* Login Form Card */}
+        <div className="rounded-2xl border border-border bg-card p-8 shadow-brand">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <label
-                htmlFor="loginId"
-                className="block text-sm font-medium text-gray-700"
-              >
-                아이디
-              </label>
-              <input
-                id="loginId"
-                type="text"
-                required
-                value={loginId}
-                onChange={(e) => setLoginId(e.target.value)}
-                placeholder="아이디를 입력하세요"
-                className="w-full min-h-[44px] rounded-md border border-gray-300 px-3 py-2 text-sm placeholder:text-gray-400 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-              />
+              <Label htmlFor="loginId">아이디</Label>
+              <div className="relative">
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+                <Input
+                  id="loginId"
+                  type="text"
+                  required
+                  value={loginId}
+                  onChange={(e) => setLoginId(e.target.value)}
+                  placeholder="아이디를 입력하세요"
+                  className="min-h-[44px] pl-10"
+                />
+              </div>
             </div>
 
             <div className="space-y-2">
-              <label
-                htmlFor="password"
-                className="block text-sm font-medium text-gray-700"
-              >
-                비밀번호
-              </label>
-              <input
-                id="password"
-                type="password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="비밀번호를 입력하세요"
-                className="w-full min-h-[44px] rounded-md border border-gray-300 px-3 py-2 text-sm placeholder:text-gray-400 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-              />
+              <Label htmlFor="password">비밀번호</Label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+                <Input
+                  id="password"
+                  type="password"
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="비밀번호를 입력하세요"
+                  className="min-h-[44px] pl-10"
+                />
+              </div>
             </div>
 
             {error && (
-              <p className="text-sm text-red-600">{error}</p>
+              <div className="rounded-lg bg-destructive/10 px-3 py-2.5 text-sm text-destructive">
+                {error}
+              </div>
             )}
 
             <Button
               type="submit"
               disabled={isSubmitting}
-              className="w-full"
+              className="w-full min-h-[44px]"
               size="lg"
             >
-              {isSubmitting ? "로그인 중..." : "로그인"}
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="size-4 animate-spin mr-2" />
+                  로그인 중...
+                </>
+              ) : (
+                "로그인"
+              )}
             </Button>
           </form>
         </div>
+
+        <p className="text-center text-xs text-muted-foreground">
+          © {new Date().getFullYear()} Medical Headspa. All rights reserved.
+        </p>
       </div>
     </div>
   );

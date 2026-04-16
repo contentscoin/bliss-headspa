@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { useQuery, useMutation } from "convex/react";
-import { api } from "../../../../convex/_generated/api";
-import type { Id } from "../../../../convex/_generated/dataModel";
+import { api } from "../../../../../convex/_generated/api";
+import type { Id } from "../../../../../convex/_generated/dataModel";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
@@ -106,9 +106,9 @@ export default function BranchesPage() {
         <Button onClick={openCreate}>지점 추가</Button>
       </div>
 
-      <div className="overflow-x-auto rounded-lg border">
+      <div className="overflow-x-auto rounded-2xl border border-border bg-card shadow-brand">
         <table className="w-full text-sm">
-          <thead className="bg-gray-50">
+          <thead className="bg-muted/50">
             <tr>
               <th className="px-4 py-3 text-left font-medium">지점명</th>
               <th className="px-4 py-3 text-left font-medium">지역</th>
@@ -120,7 +120,7 @@ export default function BranchesPage() {
           </thead>
           <tbody className="divide-y">
             {branches?.map((b) => (
-              <tr key={b._id} className="hover:bg-gray-50">
+              <tr key={b._id} className="hover:bg-muted/30 transition-colors">
                 <td className="px-4 py-3">{b.name}</td>
                 <td className="px-4 py-3">{b.region}</td>
                 <td className="px-4 py-3">{b.address}</td>
@@ -129,8 +129,8 @@ export default function BranchesPage() {
                   <span
                     className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${
                       b.isActive
-                        ? "bg-green-100 text-green-700"
-                        : "bg-gray-100 text-gray-500"
+                        ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                        : "bg-muted text-muted-foreground"
                     }`}
                   >
                     {b.isActive ? "활성" : "비활성"}
@@ -159,7 +159,7 @@ export default function BranchesPage() {
             ))}
             {branches?.length === 0 && (
               <tr>
-                <td colSpan={6} className="px-4 py-8 text-center text-gray-400">
+                <td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">
                   등록된 지점이 없습니다.
                 </td>
               </tr>
@@ -171,7 +171,7 @@ export default function BranchesPage() {
       {/* Dialog Modal */}
       {dialogOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-lg p-6 mx-4">
+          <div className="bg-card rounded-2xl shadow-brand-lg border border-border w-full max-w-lg p-6 mx-4">
             <h2 className="text-xl font-bold mb-4">
               {editId ? "지점 수정" : "지점 추가"}
             </h2>
@@ -188,7 +188,7 @@ export default function BranchesPage() {
                 <div key={key}>
                   <label className="block text-sm font-medium mb-1">{label}</label>
                   <input
-                    className="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                     value={form[key]}
                     onChange={(e) => setField(key, e.target.value)}
                     required={key !== "lat" && key !== "lng"}

@@ -2,16 +2,18 @@
 
 import { useState } from "react";
 import { useQuery, useMutation } from "convex/react";
-import { api } from "../../../../convex/_generated/api";
-import type { Id } from "../../../../convex/_generated/dataModel";
+import { api } from "../../../../../convex/_generated/api";
+import type { Id } from "../../../../../convex/_generated/dataModel";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import StatusBadge from "@/components/shared/StatusBadge";
+import PageHeader from "@/components/shared/PageHeader";
 
-const statusConfig: Record<string, { label: string; className: string }> = {
-  issued: { label: "발행됨", className: "bg-blue-100 text-blue-700" },
-  used: { label: "사용됨", className: "bg-green-100 text-green-700" },
-  expired: { label: "만료됨", className: "bg-gray-100 text-gray-500" },
-  cancelled: { label: "취소됨", className: "bg-red-100 text-red-700" },
+const statusLabels: Record<string, string> = {
+  issued: "발행됨",
+  used: "사용됨",
+  expired: "만료됨",
+  cancelled: "취소됨",
 };
 
 type StatusFilter = "all" | "issued" | "used" | "expired" | "cancelled";
@@ -79,34 +81,33 @@ export default function VouchersPage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-3xl font-bold">바우처 관리</h1>
+    <div className="space-y-6 animate-fade-in">
+      <PageHeader title="바우처 관리" description="바우처 발행 및 현황을 관리합니다.">
         <Button onClick={() => setDialogOpen(true)}>바우처 발행</Button>
-      </div>
+      </PageHeader>
 
       {/* Status Filter */}
-      <div className="flex gap-2 mb-4 flex-wrap">
+      <div className="flex flex-nowrap overflow-x-auto gap-1.5 pb-1">
         {(["all", "issued", "used", "expired", "cancelled"] as StatusFilter[]).map(
           (s) => (
             <button
               key={s}
               onClick={() => setFilter(s)}
-              className={`rounded-full px-3 py-1 text-sm font-medium transition ${
+              className={`shrink-0 rounded-full px-4 py-2 text-sm font-medium transition-all duration-200 ${
                 filter === s
-                  ? "bg-gray-900 text-white"
-                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                  ? "bg-brand-navy text-white shadow-sm"
+                  : "bg-secondary text-muted-foreground hover:bg-muted hover:text-foreground"
               }`}
             >
-              {s === "all" ? "전체" : statusConfig[s].label}
+              {s === "all" ? "전체" : statusLabels[s]}
             </button>
           )
         )}
       </div>
 
-      <div className="overflow-x-auto rounded-lg border">
+      <div className="overflow-x-auto rounded-2xl border border-border bg-card shadow-brand">
         <table className="w-full text-sm">
-          <thead className="bg-gray-50">
+          <thead className="bg-muted/50">
             <tr>
               <th className="px-4 py-3 text-left font-medium">바우처 코드</th>
               <th className="px-4 py-3 text-left font-medium">구매자</th>
@@ -119,15 +120,11 @@ export default function VouchersPage() {
           </thead>
           <tbody className="divide-y">
             {vouchers?.map((v) => (
-              <tr key={v._id} className="hover:bg-gray-50">
+              <tr key={v._id} className="hover:bg-muted/30 transition-colors">
                 <td className="px-4 py-3 font-mono">{v.voucherCode}</td>
                 <td className="px-4 py-3">{getBuyerName(v.buyerId)}</td>
                 <td className="px-4 py-3">
-                  <span
-                    className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${statusConfig[v.status]?.className}`}
-                  >
-                    {statusConfig[v.status]?.label}
-                  </span>
+                  <StatusBadge status={v.status} type="voucher" />
                 </td>
                 <td className="px-4 py-3">{fmtDate(v.issuedAt)}</td>
                 <td className="px-4 py-3">{fmtDate(v.expiresAt)}</td>
@@ -154,7 +151,7 @@ export default function VouchersPage() {
             ))}
             {vouchers?.length === 0 && (
               <tr>
-                <td colSpan={7} className="px-4 py-8 text-center text-gray-400">
+                <td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">
                   바우처가 없습니다.
                 </td>
               </tr>
@@ -166,13 +163,13 @@ export default function VouchersPage() {
       {/* Create Dialog */}
       {dialogOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-md p-6 mx-4">
+          <div className="bg-card rounded-2xl shadow-brand-lg border border-border w-full max-w-md p-6 mx-4">
             <h2 className="text-xl font-bold mb-4">바우처 발행</h2>
             <form onSubmit={handleCreate} className="space-y-3">
               <div>
                 <label className="block text-sm font-medium mb-1">구매자</label>
                 <select
-                  className="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                   value={buyerId}
                   onChange={(e) => setBuyerId(e.target.value)}
                   required
@@ -189,7 +186,7 @@ export default function VouchersPage() {
                 <label className="block text-sm font-medium mb-1">만료일</label>
                 <input
                   type="date"
-                  className="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                   value={expiresAt}
                   onChange={(e) => setExpiresAt(e.target.value)}
                   required
@@ -201,7 +198,7 @@ export default function VouchersPage() {
                   type="number"
                   min="1"
                   max="100"
-                  className="w-full rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                   value={count}
                   onChange={(e) => setCount(e.target.value)}
                   required

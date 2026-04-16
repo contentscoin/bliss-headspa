@@ -20,6 +20,10 @@ import {
   CheckCircle2,
   XCircle,
   Loader2,
+  Sparkles,
+  User,
+  Mail,
+  Ticket,
 } from "lucide-react";
 import KakaoMap from "@/components/shared/KakaoMap";
 import { toast } from "sonner";
@@ -35,6 +39,14 @@ const TIME_SLOTS = [
   "17:00",
   "18:00",
   "19:00",
+];
+
+const STEPS = [
+  { number: 1, label: "지점 정보" },
+  { number: 2, label: "예약자 정보" },
+  { number: 3, label: "바우처" },
+  { number: 4, label: "날짜" },
+  { number: 5, label: "시간" },
 ];
 
 export default function ReservePage({
@@ -78,6 +90,14 @@ export default function ReservePage({
       setVoucherVerified(true);
     }
   };
+
+  const currentStep = (() => {
+    if (!customerName || !customerPhone || !customerEmail) return 2;
+    if (!voucherVerified) return 3;
+    if (!selectedDate) return 4;
+    if (!selectedTime) return 5;
+    return 6;
+  })();
 
   const isFormComplete =
     customerName.trim() &&
@@ -138,8 +158,8 @@ export default function ReservePage({
     return (
       <div className="container mx-auto px-4 py-8">
         <div className="animate-pulse space-y-4">
-          <div className="h-6 bg-muted rounded w-1/3" />
-          <div className="h-4 bg-muted rounded w-1/2" />
+          <div className="h-6 bg-muted rounded w-1/3 skeleton-shimmer" />
+          <div className="h-4 bg-muted rounded w-1/2 skeleton-shimmer" />
         </div>
       </div>
     );
@@ -156,42 +176,44 @@ export default function ReservePage({
   // Completion screen
   if (completedReservation) {
     return (
-      <div className="container mx-auto max-w-md px-4 py-16 text-center">
-        <CheckCircle2 className="mx-auto mb-4 size-16 text-green-500" />
+      <div className="container mx-auto max-w-md px-4 py-16 text-center animate-scale-in">
+        <div className="mb-6 inline-flex items-center justify-center w-20 h-20 rounded-full bg-emerald-50">
+          <CheckCircle2 className="size-10 text-emerald-500" />
+        </div>
         <h1 className="text-2xl font-bold mb-2">예약이 완료되었습니다</h1>
-        <p className="text-muted-foreground mb-6">
+        <p className="text-muted-foreground mb-8">
           아래 예약번호를 확인해 주세요.
         </p>
-        <Card>
+        <Card className="shadow-brand-lg">
           <CardContent className="pt-6">
             <p className="text-sm text-muted-foreground">예약번호</p>
-            <p className="text-2xl font-mono font-bold mt-1">
+            <p className="text-2xl font-mono font-bold mt-1 text-brand-navy">
               {completedReservation.reservationNo}
             </p>
             <Separator className="my-4" />
-            <div className="text-sm text-left space-y-1">
-              <p>
-                <span className="text-muted-foreground">지점:</span>{" "}
-                {branch.name}
-              </p>
-              <p>
-                <span className="text-muted-foreground">날짜:</span>{" "}
-                {selectedDate && format(selectedDate, "yyyy년 M월 d일")}
-              </p>
-              <p>
-                <span className="text-muted-foreground">시간:</span>{" "}
-                {selectedTime}
-              </p>
-              <p>
-                <span className="text-muted-foreground">예약자:</span>{" "}
-                {customerName}
-              </p>
+            <div className="text-sm text-left space-y-2">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">지점</span>
+                <span className="font-medium">{branch.name}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">날짜</span>
+                <span>{selectedDate && format(selectedDate, "yyyy년 M월 d일")}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">시간</span>
+                <span>{selectedTime}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">예약자</span>
+                <span>{customerName}</span>
+              </div>
             </div>
           </CardContent>
         </Card>
         <a
           href="/"
-          className="mt-6 inline-flex w-full items-center justify-center rounded-lg bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/80 transition-colors"
+          className="mt-6 inline-flex w-full items-center justify-center rounded-xl bg-brand-navy px-3 py-3 text-sm font-semibold text-white hover:bg-brand-navy-light transition-colors"
         >
           확인
         </a>
@@ -200,26 +222,60 @@ export default function ReservePage({
   }
 
   return (
-    <div className="container mx-auto max-w-lg px-4 py-8 space-y-6">
+    <div className="container mx-auto max-w-lg px-4 py-8 space-y-6 animate-fade-in">
+      {/* Progress Indicator */}
+      <div className="flex items-center justify-between px-2 mb-2">
+        {STEPS.map((step, i) => (
+          <div key={step.number} className="flex items-center">
+            <div className="flex flex-col items-center">
+              <div
+                className={`flex items-center justify-center w-8 h-8 rounded-full text-xs font-bold transition-colors ${
+                  currentStep > step.number
+                    ? "bg-brand-gold text-brand-navy"
+                    : currentStep === step.number
+                      ? "bg-brand-navy text-white"
+                      : "bg-muted text-muted-foreground"
+                }`}
+              >
+                {currentStep > step.number ? "✓" : step.number}
+              </div>
+              <span className="text-[10px] text-muted-foreground mt-1 hidden sm:block">
+                {step.label}
+              </span>
+            </div>
+            {i < STEPS.length - 1 && (
+              <div
+                className={`w-6 sm:w-10 h-0.5 mx-1 transition-colors ${
+                  currentStep > step.number ? "bg-brand-gold" : "bg-muted"
+                }`}
+              />
+            )}
+          </div>
+        ))}
+      </div>
+
       {/* Step 1: Branch Info */}
-      <Card>
+      <Card className="shadow-brand overflow-hidden">
+        <div className="h-1 bg-gradient-gold" />
         <CardHeader>
-          <CardTitle className="text-lg">지점 정보</CardTitle>
+          <CardTitle className="text-lg flex items-center gap-2">
+            <MapPin className="size-4 text-brand-gold" />
+            지점 정보
+          </CardTitle>
         </CardHeader>
         <CardContent className="space-y-2 text-sm">
           <div className="flex items-start gap-2">
-            <MapPin className="size-4 mt-0.5 shrink-0 text-muted-foreground" />
             <div>
               <p className="font-medium">{branch.name}</p>
               <p className="text-muted-foreground">{branch.address}</p>
             </div>
           </div>
           <div className="flex items-center gap-2 text-muted-foreground">
-            <Clock className="size-4 shrink-0" />
+            <Clock className="size-4 shrink-0 text-brand-gold/60" />
             <span>{branch.businessHours}</span>
           </div>
           <div className="flex items-center gap-2 text-muted-foreground">
-            <Phone className="size-4 shrink-0" />
+            <Phone className="size-4 shrink-0 text-brand-gold/60" />
             <span>{branch.phone}</span>
           </div>
           <div className="pt-2">
@@ -235,9 +291,12 @@ export default function ReservePage({
       </Card>
 
       {/* Step 2: Customer Info */}
-      <Card>
+      <Card className="shadow-brand">
         <CardHeader>
-          <CardTitle className="text-lg">예약자 정보</CardTitle>
+          <CardTitle className="text-lg flex items-center gap-2">
+            <User className="size-4 text-brand-gold" />
+            예약자 정보
+          </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
@@ -253,34 +312,43 @@ export default function ReservePage({
           </div>
           <div className="space-y-2">
             <Label htmlFor="phone">휴대폰번호</Label>
-            <Input
-              id="phone"
-              placeholder="010-1234-5678"
-              value={customerPhone}
-              onChange={(e) => { setCustomerPhone(e.target.value); setErrors((prev) => ({ ...prev, phone: "" })); }}
-              className={`min-h-[44px] ${errors.phone ? "border-destructive" : ""}`}
-            />
+            <div className="relative">
+              <Phone className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+              <Input
+                id="phone"
+                placeholder="010-1234-5678"
+                value={customerPhone}
+                onChange={(e) => { setCustomerPhone(e.target.value); setErrors((prev) => ({ ...prev, phone: "" })); }}
+                className={`min-h-[44px] pl-10 ${errors.phone ? "border-destructive" : ""}`}
+              />
+            </div>
             {errors.phone && <p className="text-sm text-destructive">{errors.phone}</p>}
           </div>
           <div className="space-y-2">
             <Label htmlFor="email">이메일</Label>
-            <Input
-              id="email"
-              type="email"
-              placeholder="example@email.com"
-              value={customerEmail}
-              onChange={(e) => { setCustomerEmail(e.target.value); setErrors((prev) => ({ ...prev, email: "" })); }}
-              className={`min-h-[44px] ${errors.email ? "border-destructive" : ""}`}
-            />
+            <div className="relative">
+              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+              <Input
+                id="email"
+                type="email"
+                placeholder="example@email.com"
+                value={customerEmail}
+                onChange={(e) => { setCustomerEmail(e.target.value); setErrors((prev) => ({ ...prev, email: "" })); }}
+                className={`min-h-[44px] pl-10 ${errors.email ? "border-destructive" : ""}`}
+              />
+            </div>
             {errors.email && <p className="text-sm text-destructive">{errors.email}</p>}
           </div>
         </CardContent>
       </Card>
 
       {/* Step 3: Voucher */}
-      <Card>
+      <Card className="shadow-brand">
         <CardHeader>
-          <CardTitle className="text-lg">바우처 번호</CardTitle>
+          <CardTitle className="text-lg flex items-center gap-2">
+            <Ticket className="size-4 text-brand-gold" />
+            바우처 번호
+          </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="flex gap-2">
@@ -292,23 +360,25 @@ export default function ReservePage({
                 setVoucherVerified(false);
               }}
               disabled={voucherVerified}
+              className="min-h-[44px] font-mono"
             />
             <Button
               variant="outline"
               onClick={handleVerify}
               disabled={!isVoucherValid || voucherVerified}
+              className="min-h-[44px]"
             >
               {voucherVerified ? "확인됨" : "검증"}
             </Button>
           </div>
           {voucherVerified && (
-            <div className="flex items-center gap-2 text-green-600 text-sm">
+            <div className="flex items-center gap-2 text-emerald-600 text-sm bg-emerald-50 rounded-lg px-3 py-2">
               <CheckCircle2 className="size-4" />
               <span>유효한 바우처입니다.</span>
             </div>
           )}
           {isVoucherInvalid && !voucherVerified && (
-            <div className="flex items-center gap-2 text-destructive text-sm">
+            <div className="flex items-center gap-2 text-destructive text-sm bg-destructive/10 rounded-lg px-3 py-2">
               <XCircle className="size-4" />
               <span>
                 {voucher === null
@@ -324,9 +394,12 @@ export default function ReservePage({
       </Card>
 
       {/* Step 4: Date */}
-      <Card>
+      <Card className="shadow-brand">
         <CardHeader>
-          <CardTitle className="text-lg">날짜 선택</CardTitle>
+          <CardTitle className="text-lg flex items-center gap-2">
+            <Sparkles className="size-4 text-brand-gold" />
+            날짜 선택
+          </CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col items-center">
           <Calendar
@@ -335,29 +408,34 @@ export default function ReservePage({
             onSelect={(d) => { setSelectedDate(d); setErrors((prev) => ({ ...prev, date: "" })); }}
             locale={ko}
             disabled={(date) => date <= new Date()}
-            className="rounded-md border"
+            className="rounded-xl border"
           />
           {errors.date && <p className="text-sm text-destructive mt-2">{errors.date}</p>}
         </CardContent>
       </Card>
 
       {/* Step 5: Time */}
-      <Card>
+      <Card className="shadow-brand">
         <CardHeader>
-          <CardTitle className="text-lg">시간 선택</CardTitle>
+          <CardTitle className="text-lg flex items-center gap-2">
+            <Clock className="size-4 text-brand-gold" />
+            시간 선택
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
             {TIME_SLOTS.map((time) => (
-              <Button
+              <button
                 key={time}
-                variant={selectedTime === time ? "default" : "outline"}
-                size="sm"
-                className="min-h-[44px]"
                 onClick={() => { setSelectedTime(time); setErrors((prev) => ({ ...prev, time: "" })); }}
+                className={`min-h-[44px] rounded-xl text-sm font-medium transition-all ${
+                  selectedTime === time
+                    ? "bg-brand-navy text-white shadow-sm"
+                    : "bg-secondary text-foreground hover:bg-muted border border-border"
+                }`}
               >
                 {time}
-              </Button>
+              </button>
             ))}
           </div>
           {errors.time && <p className="text-sm text-destructive mt-2">{errors.time}</p>}
@@ -366,9 +444,12 @@ export default function ReservePage({
 
       {/* Step 6: Summary */}
       {isFormComplete && selectedDate && (
-        <Card>
+        <Card className="shadow-brand-lg border-brand-gold/20 animate-scale-in">
           <CardHeader>
-            <CardTitle className="text-lg">예약 요약</CardTitle>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <CheckCircle2 className="size-4 text-brand-gold" />
+              예약 요약
+            </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3 text-sm">
             <div className="flex justify-between">
@@ -391,7 +472,7 @@ export default function ReservePage({
             <Separator />
             <div className="flex justify-between">
               <span className="text-muted-foreground">바우처</span>
-              <Badge variant="outline">{voucherCode}</Badge>
+              <Badge variant="outline" className="font-mono">{voucherCode}</Badge>
             </div>
             <Separator />
             <div className="flex justify-between">
@@ -408,7 +489,7 @@ export default function ReservePage({
 
       {/* Step 7: Submit */}
       <Button
-        className="w-full min-h-[44px]"
+        className="w-full min-h-[48px] rounded-xl bg-brand-navy hover:bg-brand-navy-light text-white font-semibold"
         size="lg"
         disabled={isSubmitting}
         onClick={handleSubmit}

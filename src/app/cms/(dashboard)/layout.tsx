@@ -4,13 +4,28 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
-import { CalendarCheck, Settings, Menu, LogOut, Building2 } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
+import {
+  LayoutDashboard,
+  Building2,
+  Ticket,
+  CalendarCheck,
+  Users,
+  MessageSquare,
+  Menu,
+  LogOut,
+  Sparkles,
+} from "lucide-react";
 import ProtectedRoute from "@/components/shared/ProtectedRoute";
 import { useAuth } from "@/lib/auth";
 
 const navItems = [
-  { href: "/store/my-branch", label: "내 지점 예약", icon: CalendarCheck },
-  { href: "/store/my-branch/settings", label: "설정", icon: Settings },
+  { href: "/cms/dashboard", label: "대시보드", icon: LayoutDashboard },
+  { href: "/cms/branches", label: "지점관리", icon: Building2 },
+  { href: "/cms/vouchers", label: "바우처관리", icon: Ticket },
+  { href: "/cms/reservations", label: "예약관리", icon: CalendarCheck },
+  { href: "/cms/users", label: "계정관리", icon: Users },
+  { href: "/cms/sms-logs", label: "SMS 로그", icon: MessageSquare },
 ];
 
 function NavLink({
@@ -42,7 +57,12 @@ function NavLink({
   );
 }
 
-export default function BranchAdminLayout({
+function pageTitleFromPath(pathname: string): string {
+  const match = navItems.find((item) => pathname.startsWith(item.href));
+  return match?.label ?? "관리자";
+}
+
+export default function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
@@ -55,11 +75,11 @@ export default function BranchAdminLayout({
     <>
       <div className="flex h-16 items-center gap-2.5 border-b border-sidebar-border px-5">
         <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-brand-gold/20">
-          <Building2 className="size-4 text-brand-gold" />
+          <Sparkles className="size-4 text-brand-gold" />
         </div>
         <div>
-          <p className="text-sm font-bold text-sidebar-foreground">지점 관리</p>
-          <p className="text-[10px] text-sidebar-foreground/50">Medical Headspa</p>
+          <p className="text-sm font-bold text-sidebar-foreground">Medical Headspa</p>
+          <p className="text-[10px] text-sidebar-foreground/50">관리자 시스템</p>
         </div>
       </div>
       <nav className="flex-1 space-y-1 p-3">
@@ -67,13 +87,13 @@ export default function BranchAdminLayout({
           <NavLink
             key={item.href}
             {...item}
-            active={pathname === item.href}
+            active={pathname.startsWith(item.href)}
             onClick={() => setOpen(false)}
           />
         ))}
       </nav>
-      {user && (
-        <div className="p-3 border-t border-sidebar-border">
+      <div className="p-3 border-t border-sidebar-border">
+        {user && (
           <div className="flex items-center gap-3 px-3 py-2">
             <div className="flex items-center justify-center w-8 h-8 rounded-full bg-sidebar-accent text-sidebar-accent-foreground text-xs font-bold">
               {user.name.charAt(0)}
@@ -83,32 +103,36 @@ export default function BranchAdminLayout({
               <p className="text-[10px] text-sidebar-foreground/50 truncate">{user.email}</p>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </>
   );
 
   return (
-    <ProtectedRoute allowedRoles={["branch_admin", "super_admin"]}>
+    <ProtectedRoute allowedRoles={["super_admin"]}>
     <div className="flex min-h-screen">
       {/* Desktop Sidebar */}
-      <aside className="hidden md:flex md:w-60 md:flex-col md:bg-sidebar">
+      <aside className="hidden md:flex md:w-64 md:flex-col md:bg-sidebar">
         {sidebarContent}
       </aside>
 
+      {/* Mobile + Content */}
       <div className="flex flex-1 flex-col bg-background">
+        {/* Top bar */}
         <header className="sticky top-0 z-50 flex h-14 items-center gap-3 border-b bg-card/95 px-4 backdrop-blur supports-[backdrop-filter]:bg-card/80">
+          {/* Mobile menu */}
           <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger className="md:hidden inline-flex items-center justify-center rounded-lg size-9 hover:bg-muted transition-colors">
                 <Menu className="size-5" />
             </SheetTrigger>
-            <SheetContent side="left" className="w-60 p-0 bg-sidebar text-sidebar-foreground">
+            <SheetContent side="left" className="w-64 p-0 bg-sidebar text-sidebar-foreground">
               <SheetTitle className="sr-only">메뉴</SheetTitle>
               {sidebarContent}
             </SheetContent>
           </Sheet>
+
           <h1 className="text-lg font-semibold">
-            {pathname === "/store/my-branch/settings" ? "설정" : "내 지점 예약"}
+            {pageTitleFromPath(pathname)}
           </h1>
           <div className="ml-auto flex items-center gap-2">
             <button

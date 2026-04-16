@@ -1,0 +1,19 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "Next.js Dev Server",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": ["-c", "source ~/.nvm/nvm.sh && nvm use 20 && bun run dev"],
+      "port": 3000,
+      "autoPort": true
+    },
+    {
+      "name": "Convex Dev Server",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": ["-c", "source ~/.nvm/nvm.sh && nvm use 20 && npx convex dev"],
+      "port": 3210,
+      "autoPort": true
+    }
+  ]
+}

@@ -1,38 +1,18 @@
 "use client";
 
 import { useState } from "react";
-import { useQuery, useMutation } from "convex/react";
+import { useQuery } from "convex/react";
 import { api } from "../../../../convex/_generated/api";
 import type { Id } from "../../../../convex/_generated/dataModel";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Search, Loader2, CalendarDays } from "lucide-react";
 import { toast } from "sonner";
-
-const STATUS_MAP: Record<
-  string,
-  { label: string; className: string }
-> = {
-  confirmed: {
-    label: "예약확정",
-    className: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
-  },
-  completed: {
-    label: "이용완료",
-    className: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
-  },
-  cancelled: {
-    label: "취소",
-    className: "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400",
-  },
-  no_show: {
-    label: "노쇼",
-    className: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
-  },
-};
+import StatusBadge from "@/components/shared/StatusBadge";
+import EmptyState from "@/components/shared/EmptyState";
+import PageHeader from "@/components/shared/PageHeader";
 
 function ReservationCard({
   reservation,
@@ -50,27 +30,19 @@ function ReservationCard({
   const branch = useQuery(api.branches.getById, {
     branchId: reservation.branchId,
   });
-  const statusInfo = STATUS_MAP[reservation.status] ?? {
-    label: reservation.status,
-    className: "",
-  };
 
   return (
-    <Card>
+    <Card className="shadow-brand card-hover overflow-hidden">
+      <div className="h-0.5 bg-gradient-gold" />
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="text-base font-mono">
             {reservation.reservationNo}
           </CardTitle>
-          <Badge
-            variant="outline"
-            className={statusInfo.className}
-          >
-            {statusInfo.label}
-          </Badge>
+          <StatusBadge status={reservation.status} type="reservation" />
         </div>
       </CardHeader>
-      <CardContent className="space-y-1.5 text-sm">
+      <CardContent className="space-y-2 text-sm">
         <div className="flex justify-between">
           <span className="text-muted-foreground">지점명</span>
           <span className="font-medium">
@@ -155,13 +127,11 @@ export default function LookupPage() {
   }
 
   return (
-    <div className="container mx-auto max-w-lg px-4 py-8 space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold mb-1">예약 조회</h1>
-        <p className="text-sm text-muted-foreground">
-          예약번호 또는 전화번호로 예약 내역을 확인하세요.
-        </p>
-      </div>
+    <div className="container mx-auto max-w-lg px-4 py-8 space-y-6 animate-fade-in">
+      <PageHeader
+        title="예약 조회"
+        description="예약번호 또는 전화번호로 예약 내역을 확인하세요."
+      />
 
       <Tabs
         defaultValue="reservationNo"
@@ -192,7 +162,7 @@ export default function LookupPage() {
             <Button
               onClick={handleSearch}
               disabled={!!isSearching}
-              className="min-h-[44px] shrink-0"
+              className="min-h-[44px] shrink-0 bg-brand-navy hover:bg-brand-navy-light"
             >
               {isSearching ? (
                 <Loader2 className="size-4 animate-spin" />
@@ -215,7 +185,7 @@ export default function LookupPage() {
             <Button
               onClick={handleSearch}
               disabled={!!isSearching}
-              className="min-h-[44px] shrink-0"
+              className="min-h-[44px] shrink-0 bg-brand-navy hover:bg-brand-navy-light"
             >
               {isSearching ? (
                 <Loader2 className="size-4 animate-spin" />
@@ -229,7 +199,7 @@ export default function LookupPage() {
 
       {/* Results */}
       {hasSearched && !isSearching && reservations.length > 0 && (
-        <div className="space-y-3">
+        <div className="space-y-3 stagger-children">
           <p className="text-sm text-muted-foreground">
             {reservations.length}건의 예약이 조회되었습니다.
           </p>
@@ -241,15 +211,15 @@ export default function LookupPage() {
 
       {/* Empty state */}
       {hasSearched && !isSearching && reservations.length === 0 && (
-        <div className="text-center py-16 text-muted-foreground">
-          <CalendarDays className="mx-auto mb-3 size-10 opacity-50" />
-          <p className="text-lg font-medium">조회된 예약이 없습니다</p>
-          <p className="text-sm mt-1">
-            {mode === "reservationNo"
+        <EmptyState
+          icon={CalendarDays}
+          title="조회된 예약이 없습니다"
+          description={
+            mode === "reservationNo"
               ? "예약번호를 다시 확인해 주세요."
-              : "전화번호를 다시 확인해 주세요."}
-          </p>
-        </div>
+              : "전화번호를 다시 확인해 주세요."
+          }
+        />
       )}
     </div>
   );

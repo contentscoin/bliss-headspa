@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useQuery } from "convex/react";
-import { api } from "../../../../convex/_generated/api";
+import { api } from "../../../../../convex/_generated/api";
 import { Search, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,9 +18,9 @@ const typeLabels: Record<string, string> = {
 };
 
 const statusConfig: Record<string, { label: string; className: string }> = {
-  sent: { label: "발송완료", className: "bg-green-100 text-green-700" },
-  failed: { label: "실패", className: "bg-red-100 text-red-700" },
-  pending: { label: "대기중", className: "bg-yellow-100 text-yellow-700" },
+  sent: { label: "발송완료", className: "bg-emerald-50 text-emerald-700" },
+  failed: { label: "실패", className: "bg-red-50 text-red-700" },
+  pending: { label: "대기중", className: "bg-amber-50 text-amber-700" },
 };
 
 export default function SmsLogsPage() {
@@ -68,7 +68,7 @@ export default function SmsLogsPage() {
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-3 mb-4">
         <select
-          className="min-h-[40px] rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="min-h-[40px] rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value as SmsStatus | "")}
         >
@@ -79,7 +79,7 @@ export default function SmsLogsPage() {
         </select>
 
         <select
-          className="min-h-[40px] rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="min-h-[40px] rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
           value={typeFilter}
           onChange={(e) => setTypeFilter(e.target.value as SmsType | "")}
         >
@@ -130,7 +130,7 @@ export default function SmsLogsPage() {
           {hasFilters ? "조건에 맞는 SMS 로그가 없습니다." : "발송된 SMS가 없습니다."}
         </div>
       ) : (
-        <div className="overflow-x-auto rounded-xl border">
+        <div className="overflow-x-auto rounded-2xl border border-border bg-card shadow-brand">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b bg-muted/50">
@@ -145,7 +145,7 @@ export default function SmsLogsPage() {
               {logs.map((log) => {
                 const status = statusConfig[log.status] ?? {
                   label: log.status,
-                  className: "bg-gray-100 text-gray-700",
+                  className: "bg-secondary text-secondary-foreground",
                 };
                 return (
                   <tr key={log._id} className="border-b last:border-0">
