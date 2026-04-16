@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "@/lib/auth";
 
 type UserRole = "customer" | "branch_admin" | "buyer" | "super_admin";
@@ -17,13 +17,18 @@ export default function ProtectedRoute({
 }: ProtectedRouteProps) {
   const { user, isLoading, isAuthenticated } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
     if (isLoading) return;
     if (!isAuthenticated) {
-      router.replace("/login");
+      // 점주 영역이면 점주 로그인, 그 외는 CMS 로그인
+      const loginPath = pathname.startsWith("/store")
+        ? "/store/login"
+        : "/cms/login";
+      router.replace(loginPath);
     }
-  }, [isLoading, isAuthenticated, router]);
+  }, [isLoading, isAuthenticated, router, pathname]);
 
   if (isLoading) {
     return (

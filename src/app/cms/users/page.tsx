@@ -6,6 +6,7 @@ import { api } from "../../../../convex/_generated/api";
 import type { Id } from "../../../../convex/_generated/dataModel";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { Pencil } from "lucide-react";
 
 type Role = "customer" | "branch_admin" | "buyer" | "super_admin";
 
@@ -34,28 +35,45 @@ const emptyForm: UserForm = {
   branchId: "",
 };
 
+type EditForm = {
+  name: string;
+  phone: string;
+  role: Role;
+  branchId: string;
+};
+
 export default function UsersPage() {
   const users = useQuery(api.users.listAll);
   const branches = useQuery(api.branches.list, {});
   const createUser = useMutation(api.users.create);
+  const updateUser = useMutation(api.users.update);
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [form, setForm] = useState<UserForm>(emptyForm);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  // Edit state
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editUserId, setEditUserId] = useState<Id<"users"> | null>(null);
+  const [editForm, setEditForm] = useState<EditForm>({ name: "", phone: "", role: "customer", branchId: "" });
+  const [editErrors, setEditErrors] = useState<Record<string, string>>({});
+
   const setField = (key: keyof UserForm, value: string) =>
     setForm((prev) => ({ ...prev, [key]: value }));
+
+  const setEditField = (key: keyof EditForm, value: string) =>
+    setEditForm((prev) => ({ ...prev, [key]: value }));
 
   const validate = (): boolean => {
     const newErrors: Record<string, string> = {};
     if (!form.name.trim() || form.name.trim().length < 2) {
       newErrors.name = "이름은 2자 이상 입력해 주세요.";
     }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
-      newErrors.email = "올바른 이메일 형식을 입력해 주세요.";
+    if (!form.email.trim() || form.email.trim().length < 2) {
+      newErrors.email = "아이디는 2자 이상 입력해 주세요.";
     }
-    if (form.password.length < 6) {
-      newErrors.password = "비밀번호는 최소 6자 이상이어야 합니다.";
+    if (form.password.length < 4) {
+      newErrors.password = "비밀번호는 최소 4자 이상이어야 합니다.";
     }
     if (!form.phone.trim()) {
       newErrors.phone = "연락처를 입력해 주세요.";
@@ -67,7 +85,22 @@ export default function UsersPage() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const validateEdit = (): boolean => {
+    const newErrors: Record<string, string> = {};
+    if (!editForm.name.trim() || editForm.name.trim().length < 2) {
+      newErrors.name = "이름은 2자 이상 입력해 주세요.";
+    }
+    if (!editForm.phone.trim()) {
+      newErrors.phone = "연락처를 입력해 주세요.";
+    }
+    if (editForm.role === "branch_admin" && !editForm.branchId) {
+      newErrors.branchId = "지점을 선택해 주세요.";
+    }
+    setEditErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!validate()) return;
     try {
@@ -85,6 +118,39 @@ export default function UsersPage() {
       setDialogOpen(false);
       setForm(emptyForm);
       setErrors({});
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "오류가 발생했습니다");
+    }
+  };
+
+  const handleEdit = (user: NonNullable<typeof users>[number]) => {
+    setEditUserId(user._id);
+    setEditForm({
+      name: user.name,
+      phone: user.phone,
+      role: user.role as Role,
+      branchId: (user.branchId as string) ?? "",
+    });
+    setEditErrors({});
+    setEditDialogOpen(true);
+  };
+
+  const handleEditSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!validateEdit() || !editUserId) return;
+    try {
+      await updateUser({
+        userId: editUserId,
+        name: editForm.name.trim(),
+        phone: editForm.phone.trim(),
+        role: editForm.role,
+        ...(editForm.role === "branch_admin" && editForm.branchId
+          ? { branchId: editForm.branchId as Id<"branches"> }
+          : {}),
+      });
+      toast.success("계정 정보가 수정되었습니다");
+      setEditDialogOpen(false);
+      setEditUserId(null);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "오류가 발생했습니다");
     }
@@ -122,9 +188,10 @@ export default function UsersPage() {
           <thead className="bg-gray-50">
             <tr>
               <th className="px-4 py-3 text-left font-medium">이름</th>
-              <th className="px-4 py-3 text-left font-medium">이메일</th>
+              <th className="px-4 py-3 text-left font-medium">아이디</th>
               <th className="px-4 py-3 text-left font-medium">역할</th>
               <th className="px-4 py-3 text-left font-medium">연결 지점</th>
+              <th className="px-4 py-3 text-left font-medium">관리</th>
             </tr>
           </thead>
           <tbody className="divide-y">
@@ -138,11 +205,22 @@ export default function UsersPage() {
                   </span>
                 </td>
                 <td className="px-4 py-3">{getBranchName(u.branchId)}</td>
+                <td className="px-4 py-3">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleEdit(u)}
+                    className="h-8 px-2"
+                  >
+                    <Pencil className="h-4 w-4 mr-1" />
+                    수정
+                  </Button>
+                </td>
               </tr>
             ))}
             {users.length === 0 && (
               <tr>
-                <td colSpan={4} className="px-4 py-8 text-center text-gray-400">
+                <td colSpan={5} className="px-4 py-8 text-center text-gray-400">
                   등록된 사용자가 없습니다.
                 </td>
               </tr>
@@ -168,12 +246,13 @@ export default function UsersPage() {
                 {errors.name && <p className="text-sm text-red-600 mt-1">{errors.name}</p>}
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">이메일</label>
+                <label className="block text-sm font-medium mb-1">아이디</label>
                 <input
-                  type="email"
+                  type="text"
                   className={`w-full min-h-[44px] rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.email ? "border-red-500" : ""}`}
                   value={form.email}
                   onChange={(e) => setField("email", e.target.value)}
+                  placeholder="로그인에 사용할 아이디"
                   required
                 />
                 {errors.email && <p className="text-sm text-red-600 mt-1">{errors.email}</p>}
@@ -241,6 +320,80 @@ export default function UsersPage() {
                   취소
                 </Button>
                 <Button type="submit">추가</Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Dialog */}
+      {editDialogOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-md p-6 mx-4">
+            <h2 className="text-xl font-bold mb-4">계정 수정</h2>
+            <form onSubmit={handleEditSubmit} className="space-y-3">
+              <div>
+                <label className="block text-sm font-medium mb-1">이름</label>
+                <input
+                  className={`w-full min-h-[44px] rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${editErrors.name ? "border-red-500" : ""}`}
+                  value={editForm.name}
+                  onChange={(e) => setEditField("name", e.target.value)}
+                  required
+                />
+                {editErrors.name && <p className="text-sm text-red-600 mt-1">{editErrors.name}</p>}
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">연락처</label>
+                <input
+                  className={`w-full min-h-[44px] rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${editErrors.phone ? "border-red-500" : ""}`}
+                  value={editForm.phone}
+                  onChange={(e) => setEditField("phone", e.target.value)}
+                  placeholder="010-1234-5678"
+                  required
+                />
+                {editErrors.phone && <p className="text-sm text-red-600 mt-1">{editErrors.phone}</p>}
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">역할</label>
+                <select
+                  className="w-full min-h-[44px] rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  value={editForm.role}
+                  onChange={(e) => setEditField("role", e.target.value)}
+                >
+                  {(Object.entries(roleLabels) as [Role, string][]).map(([value, label]) => (
+                    <option key={value} value={value}>
+                      {label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              {editForm.role === "branch_admin" && (
+                <div>
+                  <label className="block text-sm font-medium mb-1">연결 지점</label>
+                  <select
+                    className={`w-full min-h-[44px] rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${editErrors.branchId ? "border-red-500" : ""}`}
+                    value={editForm.branchId}
+                    onChange={(e) => setEditField("branchId", e.target.value)}
+                  >
+                    <option value="">선택</option>
+                    {branches?.map((b) => (
+                      <option key={b._id} value={b._id}>
+                        {b.name}
+                      </option>
+                    ))}
+                  </select>
+                  {editErrors.branchId && <p className="text-sm text-red-600 mt-1">{editErrors.branchId}</p>}
+                </div>
+              )}
+              <div className="flex justify-end gap-2 pt-2">
+                <Button
+                  variant="outline"
+                  type="button"
+                  onClick={() => setEditDialogOpen(false)}
+                >
+                  취소
+                </Button>
+                <Button type="submit">저장</Button>
               </div>
             </form>
           </div>

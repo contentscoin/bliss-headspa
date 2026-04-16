@@ -62,7 +62,7 @@ export const create = mutation({
       .query("users")
       .withIndex("by_email", (q) => q.eq("email", args.email))
       .first();
-    if (existing) throw new Error("이미 등록된 이메일입니다.");
+    if (existing) throw new Error("이미 등록��� 아이디입니다.");
 
     const { password, ...rest } = args;
     const passwordHash = await hashPassword(password);

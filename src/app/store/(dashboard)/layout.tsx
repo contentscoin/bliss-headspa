@@ -10,8 +10,8 @@ import ProtectedRoute from "@/components/shared/ProtectedRoute";
 import { useAuth } from "@/lib/auth";
 
 const navItems = [
-  { href: "/my-branch", label: "내 지점 예약", icon: CalendarCheck },
-  { href: "/my-branch/settings", label: "설정", icon: Settings },
+  { href: "/store/my-branch", label: "내 지점 예약", icon: CalendarCheck },
+  { href: "/store/my-branch/settings", label: "설정", icon: Settings },
 ];
 
 function NavLink({
@@ -58,7 +58,7 @@ export default function BranchAdminLayout({
       {/* Desktop Sidebar */}
       <aside className="hidden md:flex md:w-56 md:flex-col md:border-r md:bg-sidebar">
         <div className="flex h-14 items-center border-b px-4">
-          <Link href="/my-branch" className="text-lg font-bold tracking-tight">
+          <Link href="/store/my-branch" className="text-lg font-bold tracking-tight">
             지점 관리
           </Link>
         </div>
@@ -100,7 +100,7 @@ export default function BranchAdminLayout({
             </SheetContent>
           </Sheet>
           <h1 className="text-lg font-semibold">
-            {pathname === "/my-branch/settings" ? "설정" : "내 지점 예약"}
+            {pathname === "/store/my-branch/settings" ? "설정" : "내 지점 예약"}
           </h1>
           <div className="ml-auto flex items-center gap-3">
             {user && (

@@ -29,8 +29,14 @@ export default function CustomerLayout({
 
       {/* Footer */}
       <footer className="border-t py-6">
-        <div className="container mx-auto px-4 text-center text-xs text-muted-foreground">
-          &copy; {new Date().getFullYear()} BLISS HEADSPA. All rights reserved.
+        <div className="container mx-auto px-4 text-center text-xs text-muted-foreground space-y-2">
+          <p>&copy; {new Date().getFullYear()} BLISS HEADSPA. All rights reserved.</p>
+          <Link
+            href="/store/login"
+            className="text-muted-foreground/60 hover:text-muted-foreground transition-colors"
+          >
+            점주 로그인
+          </Link>
         </div>
       </footer>
     </div>

@@ -14,7 +14,7 @@ export const seedData = internalMutation({
     // Check if admin already exists to prevent duplicate seeding
     const existingAdmin = await ctx.db
       .query("users")
-      .withIndex("by_email", (q) => q.eq("email", "admin@blissheadspa.com"))
+      .withIndex("by_email", (q) => q.eq("email", "admin"))
       .first();
 
     if (existingAdmin) {
@@ -23,16 +23,16 @@ export const seedData = internalMutation({
 
     const created: string[] = [];
 
-    // Create super_admin user
-    const adminPasswordHash = await hashPassword("admin1234");
+    // Create super_admin user (login: admin / 1234)
+    const adminPasswordHash = await hashPassword("1234");
     await ctx.db.insert("users", {
-      email: "admin@blissheadspa.com",
+      email: "admin",
       passwordHash: adminPasswordHash,
       name: "관리자",
       phone: "010-0000-0000",
       role: "super_admin",
     });
-    created.push("super_admin 사용자 (admin@blissheadspa.com)");
+    created.push("super_admin 사용자 (admin)");
 
     // Create sample branch
     await ctx.db.insert("branches", {

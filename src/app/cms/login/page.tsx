@@ -1,20 +1,20 @@
 "use client";
 
-import { useState, useEffect, FormEvent } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
 const ROLE_REDIRECTS: Record<string, string> = {
-  super_admin: "/dashboard",
-  branch_admin: "/my-branch",
+  super_admin: "/cms/dashboard",
+  branch_admin: "/store/my-branch",
   buyer: "/my-vouchers",
   customer: "/",
 };
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("");
+  const [loginId, setLoginId] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -27,22 +27,22 @@ export default function LoginPage() {
     }
   }, [isAuthenticated, user, router]);
 
-  async function handleSubmit(e: FormEvent) {
+  async function handleSubmit(e: React.SubmitEvent<HTMLFormElement>) {
     e.preventDefault();
     setError("");
 
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      setError("올바른 이메일 형식을 입력해 주세요.");
+    if (!loginId.trim()) {
+      setError("아이디를 입력해 주세요.");
       return;
     }
-    if (password.length < 6) {
-      setError("비밀번호는 최소 6자 이상이어야 합니다.");
+    if (!password) {
+      setError("비밀번호를 입력해 주세요.");
       return;
     }
 
     setIsSubmitting(true);
     try {
-      await login(email, password);
+      await login(loginId.trim(), password);
       toast.success("로그인되었습니다");
     } catch (err) {
       const msg = err instanceof Error ? err.message : "로그인에 실패했습니다.";
@@ -59,24 +59,24 @@ export default function LoginPage() {
         <div className="rounded-lg border bg-white p-8 shadow-sm">
           <div className="mb-8 text-center">
             <h1 className="text-3xl font-bold">BLISS HEADSPA</h1>
-            <p className="mt-2 text-gray-600">로그인</p>
+            <p className="mt-2 text-gray-600">관리자 로그인</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <label
-                htmlFor="email"
+                htmlFor="loginId"
                 className="block text-sm font-medium text-gray-700"
               >
-                이메일
+                아이디
               </label>
               <input
-                id="email"
-                type="email"
+                id="loginId"
+                type="text"
                 required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="이메일을 입력하세요"
+                value={loginId}
+                onChange={(e) => setLoginId(e.target.value)}
+                placeholder="아이디를 입력하세요"
                 className="w-full min-h-[44px] rounded-md border border-gray-300 px-3 py-2 text-sm placeholder:text-gray-400 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
               />
             </div>

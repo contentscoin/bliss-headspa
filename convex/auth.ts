@@ -26,12 +26,12 @@ export const login = mutation({
       .first();
 
     if (!user) {
-      throw new Error("이메일 또는 비밀번호가 올바르지 않습니다.");
+      throw new Error("아이디 또는 비밀번호가 올바르지 않습니다.");
     }
 
     const passwordHash = await hashPassword(args.password);
     if (user.passwordHash !== passwordHash) {
-      throw new Error("이메일 또는 비밀번호가 올바르지 않습니다.");
+      throw new Error("아이디 또는 비밀번호가 올바르지 않습니다.");
     }
 
     const token = generateToken();
@@ -77,7 +77,7 @@ export const register = mutation({
       .first();
 
     if (existing) {
-      throw new Error("이미 등록된 이메일입니다.");
+      throw new Error("이��� 등록된 아이디입니다.");
     }
 
     const passwordHash = await hashPassword(args.password);

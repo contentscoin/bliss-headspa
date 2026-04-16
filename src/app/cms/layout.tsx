@@ -19,12 +19,12 @@ import ProtectedRoute from "@/components/shared/ProtectedRoute";
 import { useAuth } from "@/lib/auth";
 
 const navItems = [
-  { href: "/dashboard", label: "대시보드", icon: LayoutDashboard },
-  { href: "/branches", label: "지점관리", icon: Building2 },
-  { href: "/vouchers", label: "바우처관리", icon: Ticket },
-  { href: "/reservations", label: "예약관리", icon: CalendarCheck },
-  { href: "/users", label: "계정관리", icon: Users },
-  { href: "/sms-logs", label: "SMS 로그", icon: MessageSquare },
+  { href: "/cms/dashboard", label: "대시보드", icon: LayoutDashboard },
+  { href: "/cms/branches", label: "지점관리", icon: Building2 },
+  { href: "/cms/vouchers", label: "바우처관리", icon: Ticket },
+  { href: "/cms/reservations", label: "예약관리", icon: CalendarCheck },
+  { href: "/cms/users", label: "계정관리", icon: Users },
+  { href: "/cms/sms-logs", label: "SMS 로그", icon: MessageSquare },
 ];
 
 function NavLink({
@@ -76,7 +76,7 @@ export default function AdminLayout({
       {/* Desktop Sidebar */}
       <aside className="hidden md:flex md:w-60 md:flex-col md:border-r md:bg-sidebar">
         <div className="flex h-14 items-center border-b px-4">
-          <Link href="/dashboard" className="text-lg font-bold tracking-tight">
+          <Link href="/cms/dashboard" className="text-lg font-bold tracking-tight">
             BLISS 관리자
           </Link>
         </div>
