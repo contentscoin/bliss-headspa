@@ -20,6 +20,7 @@ export default defineSchema({
     .index("by_branch", ["branchId"]),
 
   branches: defineTable({
+    branchCode: v.optional(v.string()),
     name: v.string(),
     region: v.string(),
     address: v.string(),
@@ -31,11 +32,13 @@ export default defineSchema({
   })
     .index("by_region", ["region"])
     .index("by_name", ["name"])
-    .index("by_active", ["isActive"]),
+    .index("by_active", ["isActive"])
+    .index("by_branchCode", ["branchCode"]),
 
   vouchers: defineTable({
     voucherCode: v.string(),
     buyerId: v.id("users"),
+    issuanceId: v.optional(v.id("voucherIssuances")),
     status: v.union(
       v.literal("issued"),
       v.literal("used"),
@@ -46,10 +49,26 @@ export default defineSchema({
     expiresAt: v.number(),
     usedAt: v.optional(v.number()),
     usedBranchId: v.optional(v.id("branches")),
+    usedCustomerName: v.optional(v.string()),
+    usedCustomerPhone: v.optional(v.string()),
+    usedCustomerEmail: v.optional(v.string()),
   })
     .index("by_code", ["voucherCode"])
     .index("by_buyer", ["buyerId"])
-    .index("by_status", ["status"]),
+    .index("by_status", ["status"])
+    .index("by_issuance", ["issuanceId"]),
+
+  voucherIssuances: defineTable({
+    batchNo: v.string(),
+    buyerId: v.id("users"),
+    count: v.number(),
+    expiresAt: v.number(),
+    issuedAt: v.number(),
+    memo: v.optional(v.string()),
+  })
+    .index("by_batchNo", ["batchNo"])
+    .index("by_buyer", ["buyerId"])
+    .index("by_issuedAt", ["issuedAt"]),
 
   reservations: defineTable({
     reservationNo: v.string(),

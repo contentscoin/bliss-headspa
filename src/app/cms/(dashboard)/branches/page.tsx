@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
 type BranchForm = {
+  branchCode: string;
   name: string;
   region: string;
   address: string;
@@ -18,6 +19,7 @@ type BranchForm = {
 };
 
 const emptyForm: BranchForm = {
+  branchCode: "",
   name: "",
   region: "",
   address: "",
@@ -32,6 +34,8 @@ export default function BranchesPage() {
   const createBranch = useMutation(api.branches.create);
   const updateBranch = useMutation(api.branches.update);
   const toggleActive = useMutation(api.branches.toggleActive);
+  const resetBranches = useMutation(api.seed.resetBranches);
+  const [resetting, setResetting] = useState(false);
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editId, setEditId] = useState<Id<"branches"> | null>(null);
@@ -46,6 +50,7 @@ export default function BranchesPage() {
   const openEdit = (branch: NonNullable<typeof branches>[number]) => {
     setEditId(branch._id);
     setForm({
+      branchCode: branch.branchCode ?? "",
       name: branch.name,
       region: branch.region,
       address: branch.address,
@@ -60,6 +65,7 @@ export default function BranchesPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const data = {
+      branchCode: form.branchCode || undefined,
       name: form.name,
       region: form.region,
       address: form.address,
@@ -103,13 +109,39 @@ export default function BranchesPage() {
     <div className="container mx-auto px-4 py-8">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-3xl font-bold">지점 관리</h1>
-        <Button onClick={openCreate}>지점 추가</Button>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            disabled={resetting}
+            onClick={async () => {
+              if (
+                !window.confirm(
+                  "기존 지점/지점관리자/예약을 모두 삭제하고 엑셀 기준으로 초기화합니다.\n계속하시겠습니까?"
+                )
+              )
+                return;
+              setResetting(true);
+              try {
+                const res = await resetBranches();
+                toast.success(res.message);
+              } catch (err) {
+                toast.error(err instanceof Error ? err.message : "오류가 발생했습니다");
+              } finally {
+                setResetting(false);
+              }
+            }}
+          >
+            {resetting ? "초기화 중..." : "엑셀 기준 초기화"}
+          </Button>
+          <Button onClick={openCreate}>지점 추가</Button>
+        </div>
       </div>
 
       <div className="overflow-x-auto rounded-2xl border border-border bg-card shadow-brand">
         <table className="w-full text-sm">
           <thead className="bg-muted/50">
             <tr>
+              <th className="px-4 py-3 text-left font-medium">코드</th>
               <th className="px-4 py-3 text-left font-medium">지점명</th>
               <th className="px-4 py-3 text-left font-medium">지역</th>
               <th className="px-4 py-3 text-left font-medium">주소</th>
@@ -121,6 +153,7 @@ export default function BranchesPage() {
           <tbody className="divide-y">
             {branches?.map((b) => (
               <tr key={b._id} className="hover:bg-muted/30 transition-colors">
+                <td className="px-4 py-3 font-mono text-xs">{b.branchCode ?? "-"}</td>
                 <td className="px-4 py-3">{b.name}</td>
                 <td className="px-4 py-3">{b.region}</td>
                 <td className="px-4 py-3">{b.address}</td>
@@ -159,7 +192,7 @@ export default function BranchesPage() {
             ))}
             {branches?.length === 0 && (
               <tr>
-                <td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">
+                <td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">
                   등록된 지점이 없습니다.
                 </td>
               </tr>
@@ -177,6 +210,7 @@ export default function BranchesPage() {
             </h2>
             <form onSubmit={handleSubmit} className="space-y-3">
               {([
+                ["branchCode", "지점 코드 (예: MH001)"],
                 ["name", "지점명"],
                 ["region", "지역"],
                 ["address", "주소"],
@@ -191,7 +225,7 @@ export default function BranchesPage() {
                     className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                     value={form[key]}
                     onChange={(e) => setField(key, e.target.value)}
-                    required={key !== "lat" && key !== "lng"}
+                    required={key !== "lat" && key !== "lng" && key !== "branchCode"}
                   />
                 </div>
               ))}

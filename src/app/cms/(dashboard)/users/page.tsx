@@ -47,6 +47,7 @@ export default function UsersPage() {
   const branches = useQuery(api.branches.list, {});
   const createUser = useMutation(api.users.create);
   const updateUser = useMutation(api.users.update);
+  const adminResetPassword = useMutation(api.auth.adminResetPassword);
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [form, setForm] = useState<UserForm>(emptyForm);
@@ -206,15 +207,41 @@ export default function UsersPage() {
                 </td>
                 <td className="px-4 py-3">{getBranchName(u.branchId)}</td>
                 <td className="px-4 py-3">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleEdit(u)}
-                    className="h-8 px-2"
-                  >
-                    <Pencil className="h-4 w-4 mr-1" />
-                    수정
-                  </Button>
+                  <div className="flex gap-1">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleEdit(u)}
+                      className="h-8 px-2"
+                    >
+                      <Pencil className="h-4 w-4 mr-1" />
+                      수정
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 px-2"
+                      onClick={async () => {
+                        const pw = window.prompt(
+                          `${u.name}(${u.email})의 새 비밀번호를 입력하세요. (4자 이상)`,
+                          "1234"
+                        );
+                        if (!pw) return;
+                        if (pw.length < 4) {
+                          toast.error("비밀번호는 4자 이상이어야 합니다.");
+                          return;
+                        }
+                        try {
+                          await adminResetPassword({ userId: u._id, newPassword: pw });
+                          toast.success("비밀번호가 재설정되었습니다.");
+                        } catch (err) {
+                          toast.error(err instanceof Error ? err.message : "오류가 발생했습니다");
+                        }
+                      }}
+                    >
+                      비밀번호 재설정
+                    </Button>
+                  </div>
                 </td>
               </tr>
             ))}

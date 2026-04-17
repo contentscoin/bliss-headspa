@@ -35,6 +35,7 @@ export const getByRegion = query({
 
 export const create = mutation({
   args: {
+    branchCode: v.optional(v.string()),
     name: v.string(),
     region: v.string(),
     address: v.string(),
@@ -54,6 +55,7 @@ export const create = mutation({
 export const update = mutation({
   args: {
     branchId: v.id("branches"),
+    branchCode: v.optional(v.string()),
     name: v.optional(v.string()),
     region: v.optional(v.string()),
     address: v.optional(v.string()),

@@ -3,11 +3,18 @@ import { v } from "convex/values";
 
 function generateVoucherCode(): string {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-  let code = "BHS-";
+  let code = "MHS-";
   for (let i = 0; i < 8; i++) {
     code += chars.charAt(Math.floor(Math.random() * chars.length));
   }
   return code;
+}
+
+function generateBatchNo(): string {
+  const date = new Date();
+  const ymd = `${date.getFullYear()}${String(date.getMonth() + 1).padStart(2, "0")}${String(date.getDate()).padStart(2, "0")}`;
+  const rand = Math.random().toString(36).substring(2, 6).toUpperCase();
+  return `BATCH-${ymd}-${rand}`;
 }
 
 export const listAll = query({
@@ -54,15 +61,45 @@ export const listByStatus = query({
   },
 });
 
+export const listIssuances = query({
+  args: {},
+  handler: async (ctx) => {
+    const issuances = await ctx.db.query("voucherIssuances").collect();
+    return issuances.sort((a, b) => b.issuedAt - a.issuedAt);
+  },
+});
+
+export const listByIssuance = query({
+  args: { issuanceId: v.id("voucherIssuances") },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("vouchers")
+      .withIndex("by_issuance", (q) => q.eq("issuanceId", args.issuanceId))
+      .collect();
+  },
+});
+
 export const create = mutation({
   args: {
     buyerId: v.id("users"),
     expiresAt: v.number(),
     count: v.optional(v.number()),
+    memo: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const now = Date.now();
     const total = args.count ?? 1;
+
+    const batchNo = generateBatchNo();
+    const issuanceId = await ctx.db.insert("voucherIssuances", {
+      batchNo,
+      buyerId: args.buyerId,
+      count: total,
+      expiresAt: args.expiresAt,
+      issuedAt: now,
+      memo: args.memo,
+    });
+
     const ids = [];
 
     for (let i = 0; i < total; i++) {
@@ -82,6 +119,7 @@ export const create = mutation({
       const id = await ctx.db.insert("vouchers", {
         voucherCode: code,
         buyerId: args.buyerId,
+        issuanceId,
         status: "issued",
         issuedAt: now,
         expiresAt: args.expiresAt,
@@ -89,7 +127,7 @@ export const create = mutation({
       ids.push({ id, voucherCode: code });
     }
 
-    return ids;
+    return { issuanceId, batchNo, vouchers: ids };
   },
 });
 
@@ -97,6 +135,9 @@ export const use = mutation({
   args: {
     voucherId: v.id("vouchers"),
     branchId: v.id("branches"),
+    customerName: v.optional(v.string()),
+    customerPhone: v.optional(v.string()),
+    customerEmail: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const voucher = await ctx.db.get(args.voucherId);
@@ -108,6 +149,9 @@ export const use = mutation({
       status: "used",
       usedAt: Date.now(),
       usedBranchId: args.branchId,
+      usedCustomerName: args.customerName,
+      usedCustomerPhone: args.customerPhone,
+      usedCustomerEmail: args.customerEmail,
     });
   },
 });

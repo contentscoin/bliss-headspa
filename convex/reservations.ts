@@ -96,6 +96,9 @@ export const create = mutation({
       status: "used",
       usedAt: Date.now(),
       usedBranchId: args.branchId,
+      usedCustomerName: args.customerName,
+      usedCustomerPhone: args.customerPhone,
+      usedCustomerEmail: args.customerEmail,
     });
 
     // 예약 확인 SMS 발송 (비동기)
@@ -137,6 +140,9 @@ export const cancel = mutation({
       status: "issued",
       usedAt: undefined,
       usedBranchId: undefined,
+      usedCustomerName: undefined,
+      usedCustomerPhone: undefined,
+      usedCustomerEmail: undefined,
     });
 
     // 취소 SMS 발송 (비동기)

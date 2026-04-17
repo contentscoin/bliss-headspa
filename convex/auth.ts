@@ -140,6 +140,56 @@ export const getSession = query({
   },
 });
 
+export const changePassword = mutation({
+  args: {
+    sessionToken: v.string(),
+    currentPassword: v.string(),
+    newPassword: v.string(),
+  },
+  handler: async (ctx, args) => {
+    if (args.newPassword.length < 4) {
+      throw new Error("새 비밀번호는 최소 4자 이상이어야 합니다.");
+    }
+    const session = await ctx.db
+      .query("sessions")
+      .withIndex("by_token", (q) => q.eq("token", args.sessionToken))
+      .first();
+    if (!session || session.expiresAt < Date.now()) {
+      throw new Error("세션이 만료되었습니다. 다시 로그인해 주세요.");
+    }
+
+    const user = await ctx.db.get(session.userId);
+    if (!user) throw new Error("사용자를 찾을 수 없습니다.");
+
+    const currentHash = await hashPassword(args.currentPassword);
+    if (user.passwordHash !== currentHash) {
+      throw new Error("현재 비밀번호가 올바르지 않습니다.");
+    }
+
+    const newHash = await hashPassword(args.newPassword);
+    await ctx.db.patch(user._id, { passwordHash: newHash });
+
+    return { ok: true };
+  },
+});
+
+export const adminResetPassword = mutation({
+  args: {
+    userId: v.id("users"),
+    newPassword: v.string(),
+  },
+  handler: async (ctx, args) => {
+    if (args.newPassword.length < 4) {
+      throw new Error("비밀번호는 최소 4자 이상이어야 합니다.");
+    }
+    const user = await ctx.db.get(args.userId);
+    if (!user) throw new Error("사용자를 찾을 수 없습니다.");
+    const hash = await hashPassword(args.newPassword);
+    await ctx.db.patch(user._id, { passwordHash: hash });
+    return { ok: true };
+  },
+});
+
 export const logout = mutation({
   args: { sessionToken: v.string() },
   handler: async (ctx, args) => {
