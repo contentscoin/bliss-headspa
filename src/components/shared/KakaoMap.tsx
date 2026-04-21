@@ -11,7 +11,10 @@ declare global {
         Map: new (
           container: HTMLElement,
           options: { center: unknown; level: number }
-        ) => unknown;
+        ) => {
+          relayout: () => void;
+          setCenter: (latlng: unknown) => void;
+        };
         LatLng: new (lat: number, lng: number) => unknown;
         Marker: new (options: { map: unknown; position: unknown }) => {
           setMap: (map: unknown | null) => void;
@@ -135,8 +138,9 @@ export default function KakaoMap({
       return;
     }
 
+    const container = mapRef.current;
     const center = new kakao.maps.LatLng(lat, lng);
-    const map = new kakao.maps.Map(mapRef.current, { center, level: 3 });
+    const map = new kakao.maps.Map(container, { center, level: 3 });
     const marker = new kakao.maps.Marker({ map, position: center });
 
     const infoWindow = new kakao.maps.InfoWindow({
@@ -153,6 +157,32 @@ export default function KakaoMap({
       else infoWindow.open(map, marker);
       isOpen = !isOpen;
     });
+
+    // Kakao caches container size at construction. If container was 0-width
+    // (e.g. inside a Dialog that just opened, or before layout settled),
+    // tiles render empty. Re-measure on mount, on any size change, and when
+    // document visibility changes.
+    const relayout = () => {
+      map.relayout();
+      map.setCenter(center);
+    };
+    // First pass: after the current paint, ensure tiles fill the container.
+    const raf = requestAnimationFrame(() => {
+      relayout();
+      // Second pass after 150ms handles dialog open-animations.
+      setTimeout(relayout, 200);
+    });
+
+    const resizeObserver =
+      typeof ResizeObserver !== "undefined"
+        ? new ResizeObserver(() => relayout())
+        : null;
+    resizeObserver?.observe(container);
+
+    return () => {
+      cancelAnimationFrame(raf);
+      resizeObserver?.disconnect();
+    };
   }, [ready, lat, lng, name, address]);
 
   if (error || !appKey) {
@@ -182,7 +212,7 @@ export default function KakaoMap({
 
   return (
     <div className="space-y-3">
-      <div ref={mapRef} className="rounded-lg" style={{ height }} />
+      <div ref={mapRef} className="rounded-lg w-full" style={{ height, minHeight: height }} />
       <a
         href={`https://map.kakao.com/link/to/${encodeURIComponent(name)},${lat},${lng}`}
         target="_blank"
