@@ -9,6 +9,15 @@ function generateReservationNo(): string {
   return `RSV-${ymd}-${rand}`;
 }
 
+function normalizePhone(raw: string): string {
+  const digits = raw.replace(/\D/g, "");
+  if (digits.length === 11) return `${digits.slice(0, 3)}-${digits.slice(3, 7)}-${digits.slice(7)}`;
+  if (digits.length === 10 && digits.startsWith("02")) return `02-${digits.slice(2, 6)}-${digits.slice(6)}`;
+  if (digits.length === 10) return `${digits.slice(0, 3)}-${digits.slice(3, 6)}-${digits.slice(6)}`;
+  if (digits.length === 9 && digits.startsWith("02")) return `02-${digits.slice(2, 5)}-${digits.slice(5)}`;
+  return raw.trim();
+}
+
 export const listAll = query({
   args: {},
   handler: async (ctx) => {
@@ -65,6 +74,7 @@ export const create = mutation({
     customerName: v.string(),
     customerPhone: v.string(),
     customerEmail: v.string(),
+    customerGender: v.optional(v.union(v.literal("male"), v.literal("female"))),
     reservationDate: v.string(),
     reservationTime: v.string(),
   },
@@ -78,6 +88,7 @@ export const create = mutation({
     if (!branch) throw new Error("Branch not found");
     if (!branch.isActive) throw new Error("비활성 지점입니다.");
 
+    const normalizedPhone = normalizePhone(args.customerPhone);
     const reservationNo = generateReservationNo();
 
     const reservationId = await ctx.db.insert("reservations", {
@@ -85,8 +96,9 @@ export const create = mutation({
       branchId: args.branchId,
       voucherId: args.voucherId,
       customerName: args.customerName,
-      customerPhone: args.customerPhone,
+      customerPhone: normalizedPhone,
       customerEmail: args.customerEmail,
+      customerGender: args.customerGender,
       reservationDate: args.reservationDate,
       reservationTime: args.reservationTime,
       status: "confirmed",
@@ -97,7 +109,7 @@ export const create = mutation({
       usedAt: Date.now(),
       usedBranchId: args.branchId,
       usedCustomerName: args.customerName,
-      usedCustomerPhone: args.customerPhone,
+      usedCustomerPhone: normalizedPhone,
       usedCustomerEmail: args.customerEmail,
     });
 

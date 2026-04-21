@@ -75,7 +75,7 @@ export const sendReservationConfirm = internalAction({
     const [month, day] = reservationDate.split("-").slice(1);
 
     // 고객에게 예약 확인 SMS
-    const customerMsg = `[블리스헤드스파] ${branchName} ${parseInt(month)}/${parseInt(day)} ${reservationTime} 예약이 확정되었습니다. 예약번호: ${reservationNo}`;
+    const customerMsg = `[메디컬헤드스파] ${branchName} ${parseInt(month)}/${parseInt(day)} ${reservationTime} 예약이 접수되었습니다. 예약번호: ${reservationNo}\n빠른 시간 내 CS 담당자가 예약 확인을 위해 연락드릴 예정입니다.`;
     await ctx.runAction(internal.sms.sendSMSInternal, {
       phone: customerPhone,
       message: customerMsg,

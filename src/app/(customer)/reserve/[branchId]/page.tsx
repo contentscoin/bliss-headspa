@@ -28,6 +28,21 @@ import {
 import KakaoMap from "@/components/shared/KakaoMap";
 import { toast } from "sonner";
 
+function formatPhone(raw: string): string {
+  const digits = raw.replace(/\D/g, "").slice(0, 11);
+  if (digits.length === 0) return "";
+  if (digits.startsWith("02")) {
+    if (digits.length <= 2) return digits;
+    if (digits.length <= 5) return `${digits.slice(0, 2)}-${digits.slice(2)}`;
+    if (digits.length <= 9) return `${digits.slice(0, 2)}-${digits.slice(2, 5)}-${digits.slice(5)}`;
+    return `${digits.slice(0, 2)}-${digits.slice(2, 6)}-${digits.slice(6, 10)}`;
+  }
+  if (digits.length <= 3) return digits;
+  if (digits.length <= 7) return `${digits.slice(0, 3)}-${digits.slice(3)}`;
+  if (digits.length === 10) return `${digits.slice(0, 3)}-${digits.slice(3, 6)}-${digits.slice(6)}`;
+  return `${digits.slice(0, 3)}-${digits.slice(3, 7)}-${digits.slice(7)}`;
+}
+
 const TIME_SLOTS = [
   "10:00",
   "11:00",
@@ -63,6 +78,7 @@ export default function ReservePage({
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
   const [customerEmail, setCustomerEmail] = useState("");
+  const [customerGender, setCustomerGender] = useState<"male" | "female" | "">("");
   const [voucherCode, setVoucherCode] = useState("");
   const [voucherVerified, setVoucherVerified] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
@@ -92,7 +108,7 @@ export default function ReservePage({
   };
 
   const currentStep = (() => {
-    if (!customerName || !customerPhone || !customerEmail) return 2;
+    if (!customerName || !customerPhone || !customerEmail || !customerGender) return 2;
     if (!voucherVerified) return 3;
     if (!selectedDate) return 4;
     if (!selectedTime) return 5;
@@ -103,6 +119,7 @@ export default function ReservePage({
     customerName.trim() &&
     customerPhone.trim() &&
     customerEmail.trim() &&
+    customerGender &&
     voucherVerified &&
     selectedDate &&
     selectedTime;
@@ -112,11 +129,14 @@ export default function ReservePage({
     if (!customerName.trim() || customerName.trim().length < 2) {
       newErrors.name = "이름은 2자 이상 입력해 주세요.";
     }
-    if (!customerPhone.trim() || !/^010-\d{4}-\d{4}$/.test(customerPhone.trim())) {
-      newErrors.phone = "010-XXXX-XXXX 형식으로 입력해 주세요.";
+    if (!customerPhone.trim() || !/^(010-\d{4}-\d{4}|0\d{1,2}-\d{3,4}-\d{4})$/.test(customerPhone.trim())) {
+      newErrors.phone = "올바른 전화번호 형식을 입력해 주세요.";
     }
     if (!customerEmail.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerEmail.trim())) {
       newErrors.email = "올바른 이메일 형식을 입력해 주세요.";
+    }
+    if (!customerGender) {
+      newErrors.gender = "성별을 선택해 주세요.";
     }
     if (!voucherVerified) {
       newErrors.voucher = "바우처 검증이 필요합니다.";
@@ -141,6 +161,7 @@ export default function ReservePage({
         customerName: customerName.trim(),
         customerPhone: customerPhone.trim(),
         customerEmail: customerEmail.trim(),
+        customerGender: customerGender || undefined,
         reservationDate: format(selectedDate, "yyyy-MM-dd"),
         reservationTime: selectedTime,
       });
@@ -211,6 +232,13 @@ export default function ReservePage({
             </div>
           </CardContent>
         </Card>
+        <div className="mt-4 rounded-xl bg-brand-gold/10 border border-brand-gold/30 px-4 py-3 text-sm text-left">
+          <p className="font-semibold text-brand-navy mb-1">📞 예약 확인 안내</p>
+          <p className="text-muted-foreground leading-relaxed">
+            예약이 접수되었습니다. 빠른 시간 내에 CS 담당자가 예약 확인을 위해
+            연락드릴 예정입니다.
+          </p>
+        </div>
         <a
           href="/"
           className="mt-6 inline-flex w-full items-center justify-center rounded-xl bg-brand-navy px-3 py-3 text-sm font-semibold text-white hover:bg-brand-navy-light transition-colors"
@@ -316,13 +344,44 @@ export default function ReservePage({
               <Phone className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
               <Input
                 id="phone"
+                type="tel"
+                inputMode="numeric"
                 placeholder="010-1234-5678"
                 value={customerPhone}
-                onChange={(e) => { setCustomerPhone(e.target.value); setErrors((prev) => ({ ...prev, phone: "" })); }}
+                onChange={(e) => {
+                  setCustomerPhone(formatPhone(e.target.value));
+                  setErrors((prev) => ({ ...prev, phone: "" }));
+                }}
                 className={`min-h-[44px] pl-10 ${errors.phone ? "border-destructive" : ""}`}
               />
             </div>
             {errors.phone && <p className="text-sm text-destructive">{errors.phone}</p>}
+          </div>
+          <div className="space-y-2">
+            <Label>성별</Label>
+            <div className="grid grid-cols-2 gap-2">
+              {([
+                ["male", "남성"],
+                ["female", "여성"],
+              ] as const).map(([val, label]) => (
+                <button
+                  key={val}
+                  type="button"
+                  onClick={() => {
+                    setCustomerGender(val);
+                    setErrors((prev) => ({ ...prev, gender: "" }));
+                  }}
+                  className={`min-h-[44px] rounded-xl text-sm font-medium transition-all ${
+                    customerGender === val
+                      ? "bg-brand-navy text-white shadow-sm"
+                      : "bg-secondary text-foreground hover:bg-muted border border-border"
+                  } ${errors.gender && !customerGender ? "border-destructive" : ""}`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+            {errors.gender && <p className="text-sm text-destructive">{errors.gender}</p>}
           </div>
           <div className="space-y-2">
             <Label htmlFor="email">이메일</Label>
@@ -353,7 +412,7 @@ export default function ReservePage({
         <CardContent className="space-y-3">
           <div className="flex gap-2">
             <Input
-              placeholder="BHS-XXXXXXXX"
+              placeholder="MHS-XXXXXXXX"
               value={voucherCode}
               onChange={(e) => {
                 setVoucherCode(e.target.value.toUpperCase());
@@ -466,6 +525,10 @@ export default function ReservePage({
               <span>{customerPhone}</span>
             </div>
             <div className="flex justify-between">
+              <span className="text-muted-foreground">성별</span>
+              <span>{customerGender === "male" ? "남성" : customerGender === "female" ? "여성" : "-"}</span>
+            </div>
+            <div className="flex justify-between">
               <span className="text-muted-foreground">이메일</span>
               <span>{customerEmail}</span>
             </div>
@@ -482,6 +545,10 @@ export default function ReservePage({
             <div className="flex justify-between">
               <span className="text-muted-foreground">시간</span>
               <span>{selectedTime}</span>
+            </div>
+            <Separator />
+            <div className="rounded-lg bg-brand-gold/10 border border-brand-gold/30 px-3 py-2 text-xs text-muted-foreground leading-relaxed">
+              예약 확정 후 빠른 시간 내에 CS 담당자가 예약 확인을 위해 연락드립니다.
             </div>
           </CardContent>
         </Card>

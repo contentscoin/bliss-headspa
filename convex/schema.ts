@@ -77,6 +77,7 @@ export default defineSchema({
     customerName: v.string(),
     customerPhone: v.string(),
     customerEmail: v.string(),
+    customerGender: v.optional(v.union(v.literal("male"), v.literal("female"))),
     reservationDate: v.string(),
     reservationTime: v.string(),
     status: v.union(

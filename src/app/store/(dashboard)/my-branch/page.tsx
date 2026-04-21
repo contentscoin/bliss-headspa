@@ -171,6 +171,7 @@ export default function MyBranchPage() {
             <tr>
               <th className="px-4 py-3 text-left font-medium">예약번호</th>
               <th className="px-4 py-3 text-left font-medium">고객명</th>
+              <th className="px-4 py-3 text-left font-medium">성별</th>
               <th className="px-4 py-3 text-left font-medium">연락처</th>
               <th className="px-4 py-3 text-left font-medium">날짜</th>
               <th className="px-4 py-3 text-left font-medium">시간</th>
@@ -182,7 +183,7 @@ export default function MyBranchPage() {
             {reservations === undefined && (
               Array.from({ length: 5 }).map((_, i) => (
                 <tr key={i}>
-                  {Array.from({ length: 7 }).map((_, j) => (
+                  {Array.from({ length: 8 }).map((_, j) => (
                     <td key={j} className="px-4 py-3">
                       <div className="h-4 w-20 animate-pulse rounded bg-muted skeleton-shimmer" />
                     </td>
@@ -194,6 +195,9 @@ export default function MyBranchPage() {
               <tr key={r._id} className="hover:bg-muted/30 transition-colors">
                 <td className="px-4 py-3 font-mono text-xs">{r.reservationNo}</td>
                 <td className="px-4 py-3">{r.customerName}</td>
+                <td className="px-4 py-3">
+                  {r.customerGender === "male" ? "남" : r.customerGender === "female" ? "여" : "-"}
+                </td>
                 <td className="px-4 py-3">{r.customerPhone}</td>
                 <td className="px-4 py-3">{r.reservationDate}</td>
                 <td className="px-4 py-3">{r.reservationTime}</td>
@@ -219,7 +223,7 @@ export default function MyBranchPage() {
             ))}
             {reservations?.length === 0 && (
               <tr>
-                <td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">
+                <td colSpan={8} className="px-4 py-8 text-center text-muted-foreground">
                   {viewMode === "upcoming"
                     ? "다가오는 예약이 없습니다."
                     : viewMode === "all"
