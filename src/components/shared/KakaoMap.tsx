@@ -43,6 +43,59 @@ interface KakaoMapProps {
   height?: string;
 }
 
+// Module-level singleton to avoid duplicate script injection under React StrictMode
+let sdkLoadPromise: Promise<void> | null = null;
+
+function loadKakaoSdk(appKey: string): Promise<void> {
+  if (typeof window === "undefined") return Promise.reject(new Error("no window"));
+  if (window.kakao?.maps?.LatLng) return Promise.resolve();
+  if (sdkLoadPromise) return sdkLoadPromise;
+
+  sdkLoadPromise = new Promise<void>((resolve, reject) => {
+    const finalize = () => {
+      if (!window.kakao?.maps?.load) {
+        reject(new Error("Kakao SDK failed to initialize"));
+        return;
+      }
+      window.kakao.maps.load(() => resolve());
+    };
+
+    const existing = document.querySelector<HTMLScriptElement>(
+      'script[data-kakao-sdk="true"]'
+    );
+    if (existing) {
+      if (window.kakao?.maps) {
+        finalize();
+      } else {
+        existing.addEventListener("load", finalize, { once: true });
+        existing.addEventListener(
+          "error",
+          () => reject(new Error("Kakao SDK load error")),
+          { once: true }
+        );
+      }
+      return;
+    }
+
+    const script = document.createElement("script");
+    script.src = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${appKey}&autoload=false`;
+    script.async = true;
+    script.dataset.kakaoSdk = "true";
+    script.addEventListener("load", finalize, { once: true });
+    script.addEventListener(
+      "error",
+      () => {
+        sdkLoadPromise = null;
+        reject(new Error("Kakao SDK load error"));
+      },
+      { once: true }
+    );
+    document.head.appendChild(script);
+  });
+
+  return sdkLoadPromise;
+}
+
 export default function KakaoMap({
   lat,
   lng,
@@ -51,7 +104,7 @@ export default function KakaoMap({
   height = "300px",
 }: KakaoMapProps) {
   const mapRef = useRef<HTMLDivElement>(null);
-  const [loaded, setLoaded] = useState(false);
+  const [ready, setReady] = useState(false);
   const [error, setError] = useState(false);
 
   const appKey = process.env.NEXT_PUBLIC_KAKAO_MAP_KEY;
@@ -61,46 +114,30 @@ export default function KakaoMap({
       setError(true);
       return;
     }
-
-    // Check if SDK is already loaded
-    if (window.kakao?.maps) {
-      setLoaded(true);
-      return;
-    }
-
-    // Check if script tag already exists
-    const existingScript = document.querySelector(
-      'script[src*="dapi.kakao.com"]'
-    );
-    if (existingScript) {
-      existingScript.addEventListener("load", () => setLoaded(true));
-      return;
-    }
-
-    const script = document.createElement("script");
-    script.src = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${appKey}&autoload=false`;
-    script.async = true;
-    script.onload = () => {
-      window.kakao.maps.load(() => setLoaded(true));
+    let cancelled = false;
+    loadKakaoSdk(appKey)
+      .then(() => {
+        if (!cancelled) setReady(true);
+      })
+      .catch(() => {
+        if (!cancelled) setError(true);
+      });
+    return () => {
+      cancelled = true;
     };
-    script.onerror = () => setError(true);
-    document.head.appendChild(script);
   }, [appKey]);
 
   useEffect(() => {
-    if (!loaded || !mapRef.current) return;
-
+    if (!ready || !mapRef.current) return;
     const { kakao } = window;
-    const center = new kakao.maps.LatLng(lat, lng);
-    const map = new kakao.maps.Map(mapRef.current, {
-      center,
-      level: 3,
-    });
+    if (!kakao?.maps?.LatLng) {
+      setError(true);
+      return;
+    }
 
-    const marker = new kakao.maps.Marker({
-      map,
-      position: center,
-    });
+    const center = new kakao.maps.LatLng(lat, lng);
+    const map = new kakao.maps.Map(mapRef.current, { center, level: 3 });
+    const marker = new kakao.maps.Marker({ map, position: center });
 
     const infoWindow = new kakao.maps.InfoWindow({
       content: `<div style="padding:8px 12px;font-size:13px;line-height:1.4;min-width:150px;">
@@ -112,14 +149,11 @@ export default function KakaoMap({
 
     let isOpen = false;
     kakao.maps.event.addListener(marker, "click", () => {
-      if (isOpen) {
-        infoWindow.close();
-      } else {
-        infoWindow.open(map, marker);
-      }
+      if (isOpen) infoWindow.close();
+      else infoWindow.open(map, marker);
       isOpen = !isOpen;
     });
-  }, [loaded, lat, lng, name, address]);
+  }, [ready, lat, lng, name, address]);
 
   if (error || !appKey) {
     return (
