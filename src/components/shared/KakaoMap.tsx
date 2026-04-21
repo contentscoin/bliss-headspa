@@ -140,22 +140,20 @@ export default function KakaoMap({
 
     const container = mapRef.current;
     let cancelled = false;
-    let cleanup: (() => void) | null = null;
+    type KakaoMapInstance = InstanceType<typeof kakao.maps.Map>;
+    let map: KakaoMapInstance | null = null;
+    let roConstruct: ResizeObserver | null = null;
+    let roRelayout: ResizeObserver | null = null;
+    const timers: ReturnType<typeof setTimeout>[] = [];
 
-    // Wait until container has real dimensions before constructing Map.
-    // Kakao caches the container size on construction and won't request
-    // tiles if initial size is 0 — relayout() afterward is unreliable in
-    // that case (you see marker + scale but blank tiles).
-    const initWhenSized = () => {
-      if (cancelled) return;
-      const { offsetWidth: w, offsetHeight: h } = container;
-      if (w < 20 || h < 20) {
-        requestAnimationFrame(initWhenSized);
-        return;
-      }
+    const center = new kakao.maps.LatLng(lat, lng);
 
-      const center = new kakao.maps.LatLng(lat, lng);
-      const map = new kakao.maps.Map(container, { center, level: 3 });
+    const constructMap = (w: number, h: number) => {
+      if (cancelled || map) return;
+      // Need a real size. If still too small, wait for the next RO tick.
+      if (w < 100 || h < 80) return;
+
+      map = new kakao.maps.Map(container, { center, level: 3 });
       const marker = new kakao.maps.Marker({ map, position: center });
 
       const infoWindow = new kakao.maps.InfoWindow({
@@ -169,35 +167,52 @@ export default function KakaoMap({
       let isOpen = false;
       kakao.maps.event.addListener(marker, "click", () => {
         if (isOpen) infoWindow.close();
-        else infoWindow.open(map, marker);
+        else infoWindow.open(map!, marker);
         isOpen = !isOpen;
       });
 
       const relayout = () => {
-        map.relayout();
-        map.setCenter(center);
+        map?.relayout();
+        map?.setCenter(center);
       };
-      // Extra safety passes for dialog animations / late font loads.
-      const t1 = setTimeout(relayout, 100);
-      const t2 = setTimeout(relayout, 400);
+      // Multiple passes cover late font/layout settles.
+      [50, 200, 600, 1200].forEach((ms) =>
+        timers.push(setTimeout(relayout, ms))
+      );
 
-      const ro =
-        typeof ResizeObserver !== "undefined"
-          ? new ResizeObserver(() => relayout())
-          : null;
-      ro?.observe(container);
-
-      cleanup = () => {
-        clearTimeout(t1);
-        clearTimeout(t2);
-        ro?.disconnect();
-      };
+      // Stop the "construct" observer, switch to a "relayout" observer.
+      roConstruct?.disconnect();
+      roConstruct = null;
+      if (typeof ResizeObserver !== "undefined") {
+        roRelayout = new ResizeObserver(() => relayout());
+        roRelayout.observe(container);
+      }
     };
 
-    initWhenSized();
+    // Use ResizeObserver to learn the real rendered size. First fire
+    // happens right after observe() with the actual layout size.
+    if (typeof ResizeObserver !== "undefined") {
+      roConstruct = new ResizeObserver((entries) => {
+        const rect = entries[0]?.contentRect;
+        if (rect) constructMap(rect.width, rect.height);
+      });
+      roConstruct.observe(container);
+    } else {
+      // Fallback: poll via rAF until sized.
+      const poll = () => {
+        if (cancelled || map) return;
+        const { offsetWidth: w, offsetHeight: h } = container;
+        if (w >= 100 && h >= 80) constructMap(w, h);
+        else requestAnimationFrame(poll);
+      };
+      requestAnimationFrame(poll);
+    }
+
     return () => {
       cancelled = true;
-      cleanup?.();
+      timers.forEach(clearTimeout);
+      roConstruct?.disconnect();
+      roRelayout?.disconnect();
     };
   }, [ready, lat, lng, name, address]);
 
@@ -228,7 +243,11 @@ export default function KakaoMap({
 
   return (
     <div className="space-y-3">
-      <div ref={mapRef} className="rounded-lg w-full" style={{ height, minHeight: height }} />
+      <div
+        ref={mapRef}
+        className="rounded-lg w-full"
+        style={{ height, minHeight: height, position: "relative", overflow: "hidden" }}
+      />
       <a
         href={`https://map.kakao.com/link/to/${encodeURIComponent(name)},${lat},${lng}`}
         target="_blank"
