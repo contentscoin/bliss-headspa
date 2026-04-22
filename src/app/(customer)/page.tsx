@@ -15,6 +15,7 @@ import {
 import { MapPin, Clock, Phone, ArrowRight, Sparkles, Shield, Calendar, Star } from "lucide-react";
 import KakaoMap from "@/components/shared/KakaoMap";
 import EmptyState from "@/components/shared/EmptyState";
+import FAQSection from "@/components/shared/FAQSection";
 
 const REGIONS = ["전체", "서울", "경기", "부산", "대구", "광주", "대전", "인천", "제주"];
 
@@ -236,6 +237,9 @@ export default function CustomerMainPage() {
           )}
         </div>
       </section>
+
+      {/* ===== FAQ (LLM-optimized for GEO / AI Overviews) ===== */}
+      <FAQSection />
     </div>
   );
 }
