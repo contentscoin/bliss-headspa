@@ -5,6 +5,7 @@ import { Navigation } from "lucide-react";
 
 declare global {
   interface Window {
+    __kakaoDiagPatched?: boolean;
     kakao: {
       maps: {
         load: (callback: () => void) => void;
@@ -94,6 +95,38 @@ function loadKakaoSdk(appKey: string): Promise<void> {
       { once: true }
     );
     document.head.appendChild(script);
+
+    // Diagnostic: capture Kakao's auth-failure messages so we can see the
+    // actual reason in the console (Kakao logs auth errors via console.warn
+    // instead of throwing). Wrapping here is non-destructive — other
+    // console output is preserved.
+    if (typeof window !== "undefined" && !window.__kakaoDiagPatched) {
+      window.__kakaoDiagPatched = true;
+      const origWarn = console.warn.bind(console);
+      const origError = console.error.bind(console);
+      const banner = (label: string, ...args: unknown[]) => {
+        try {
+          const text = args.map((a) => (typeof a === "string" ? a : JSON.stringify(a))).join(" ");
+          if (text.toLowerCase().includes("kakao") || text.includes("appkey") || text.includes("도메인")) {
+            origError(
+              `%c[KakaoMap Diagnostic] %c${label}: ${text}`,
+              "color:#c00;font-weight:bold",
+              "color:#333"
+            );
+          }
+        } catch {
+          /* ignore */
+        }
+      };
+      console.warn = (...args: unknown[]) => {
+        banner("warn", ...args);
+        origWarn(...args);
+      };
+      console.error = (...args: unknown[]) => {
+        banner("error", ...args);
+        origError(...args);
+      };
+    }
   });
 
   return sdkLoadPromise;
